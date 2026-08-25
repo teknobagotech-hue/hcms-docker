@@ -155,7 +155,7 @@ export default function PrescriptionsList() {
               "A merry heart doeth good like a medicine." Proverbs 17:22
           </div>
           <div class="doc-name cursive-text">
-              GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM
+              GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
           </div>
           <div class="doc-specialty">
               <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>

@@ -65,7 +65,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
     <body>
       <div style="max-width: 750px; margin: 0 auto;">
         <div class="doc-header-name">
-          GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM
+          GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
         </div>
         <div class="doc-specialty">
           <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
@@ -193,7 +193,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
     <body>
       <div style="max-width: 750px; margin: 0 auto;">
         <div class="doc-header-name">
-          GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM
+          GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
         </div>
         <div class="doc-specialty">
           <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
@@ -360,7 +360,7 @@ export function printPharmacyReceipt({ sale, items = [] }) {
       <div class="receipt-card">
         <div class="header">
           <h1>MedDesk Pharmacy</h1>
-          <p><strong>Dr. Gladdays Casuga-Napigkit, MD</strong></p>
+          <p><strong>Dr. Gladdays Casuga-Napigkit, MD, MBAHHCM</strong></p>
           <p>Internal Medicine • Adult Cardiology • Vascular Medicine</p>
           <p>Valencia City, Bukidnon</p>
         </div>
@@ -514,7 +514,7 @@ export function printBillingReceipt({ bill }) {
       <div class="receipt-card">
         <div class="header">
           <h1>MedDesk Billing</h1>
-          <p><strong>Dr. Gladdays Casuga-Napigkit, MD</strong></p>
+          <p><strong>Dr. Gladdays Casuga-Napigkit, MD, MBAHHCM</strong></p>
           <p>Internal Medicine • Adult Cardiology • Vascular Medicine</p>
           <p>Valencia City, Bukidnon</p>
         </div>

@@ -165,7 +165,7 @@ export default function PatientPrint() {
 
       {/* Doctor Header */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: '0 0 0.25rem 0', color: '#000' }}>Gladdays Casuga-Napigkit, MD, MBA, FPCP, FPCC, FPSVM</h1>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: '0 0 0.25rem 0', color: '#000' }}>Gladdays Casuga-Napigkit, MD, MBAHHCM, FPCP, FPCC, FPSVM</h1>
         <p style={{ fontSize: '1rem', color: '#333', margin: '0 0 0.5rem 0' }}>Internal Medicine, Adult Cardiology, Vascular Medicine</p>
         <p style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#000', margin: 0 }}>PATIENT PROFILE</p>
       </div>
