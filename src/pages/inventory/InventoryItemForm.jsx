@@ -165,7 +165,7 @@ export default function InventoryItemForm() {
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Price ($)</label>
+              <label className="form-label">Price (₱)</label>
               <input
                 type="number"
                 name="price"

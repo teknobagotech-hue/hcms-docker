@@ -12,10 +12,12 @@ export default function PatientVitals({ patientId }) {
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+
+  const [searchTerm, setSearchTerm] = useState('');
 
   const printColumns = [
     { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString() },
@@ -51,6 +53,12 @@ export default function PatientVitals({ patientId }) {
     setLoading(false);
   };
 
+  const displayedVitals = vitals.filter(record => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase().trim();
+    return Object.values(record).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(q));
+  });
+
   const handleDelete = async () => {
     const { error } = await supabase
       .from('vital_signs')
@@ -75,59 +83,68 @@ export default function PatientVitals({ patientId }) {
           Vital Signs Log
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <TablePrintControls records={vitals} title="Vital Signs Log" columns={printColumns} dateField="record_date" />
+          <TablePrintControls 
+            records={vitals} 
+            title="Vital Signs Log" 
+            columns={printColumns} 
+            dateField="record_date" 
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
           <Link to={`/patients/${patientId}/vitals/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> Record Vitals
           </Link>
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>BP (mmHg)</th>
-            <th>Pulse (bpm)</th>
-            <th>SpO2 (%)</th>
-            <th>Temp (°C)</th>
-            <th>Weight (kg)</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
-          ) : vitals.length === 0 ? (
-            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No vital signs recorded.</td></tr>
-          ) : (
-            vitals.map(record => (
-              <tr key={record.vital_id}>
-                <td style={{ fontWeight: 500 }}>
-                  {new Date(record.record_date).toLocaleDateString()}
-                </td>
-                <td>{record.bp || '-'}</td>
-                <td>{record.pr || '-'}</td>
-                <td>{record.spo2 || '-'}</td>
-                <td>{record.temperature_c || '-'}</td>
-                <td>{record.weight_kg || '-'}</td>
-                <td>
-                  <div className="table-actions">
-                    <Link to={`/patients/${patientId}/view/vitals/${record.vital_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
-                      <Eye size={16} />
-                    </Link>
-                    <Link to={`/patients/${patientId}/vitals/edit/${record.vital_id}`} className="icon-btn edit">
-                      <Edit size={16} />
-                    </Link>
-                    <button className="icon-btn delete" onClick={() => { setSelectedId(record.vital_id); setModalOpen(true); }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div style={{ width: '100%', overflowX: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>BP (mmHg)</th>
+              <th>Pulse (bpm)</th>
+              <th>SpO2 (%)</th>
+              <th>Temp (°C)</th>
+              <th>Weight (kg)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+            ) : displayedVitals.length === 0 ? (
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>{searchTerm ? `No records matching "${searchTerm}"` : 'No vital signs recorded.'}</td></tr>
+            ) : (
+              displayedVitals.map(record => (
+                <tr key={record.vital_id}>
+                  <td style={{ fontWeight: 500 }}>
+                    {new Date(record.record_date).toLocaleDateString()}
+                  </td>
+                  <td>{record.bp || '-'}</td>
+                  <td>{record.pr || '-'}</td>
+                  <td>{record.spo2 || '-'}</td>
+                  <td>{record.temperature_c || '-'}</td>
+                  <td>{record.weight_kg || '-'}</td>
+                  <td>
+                    <div className="table-actions">
+                      <Link to={`/patients/${patientId}/view/vitals/${record.vital_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
+                        <Eye size={16} />
+                      </Link>
+                      <Link to={`/patients/${patientId}/vitals/edit/${record.vital_id}`} className="icon-btn edit">
+                        <Edit size={16} />
+                      </Link>
+                      <button className="icon-btn delete" onClick={() => { setSelectedId(record.vital_id); setModalOpen(true); }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {totalPages > 1 && (
         <div className="pagination" style={{ marginTop: '1rem' }}>

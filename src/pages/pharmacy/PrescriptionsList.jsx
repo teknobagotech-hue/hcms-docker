@@ -15,7 +15,7 @@ export default function PrescriptionsList() {
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
@@ -107,7 +107,7 @@ export default function PrescriptionsList() {
       .select('*, medicines(medicine_name)')
       .eq('prescription_id', prescription.prescription_id);
 
-    let itemsHtml = prescription.notes ? `<div style="font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">Notes: ${prescription.notes}</div>` : '';
+    let itemsHtml = (prescription.notes && !prescription.notes.includes('Extracted from document')) ? `<div style="font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">Notes: ${prescription.notes}</div>` : '';
     
     if (items && items.length > 0) {
       itemsHtml += items.map((item, i) => {

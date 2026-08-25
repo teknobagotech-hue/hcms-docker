@@ -1,10 +1,32 @@
 import React, { useState } from 'react';
-import { Printer } from 'lucide-react';
+import { Printer, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function TablePrintControls({ records, title, columns, dateField }) {
+export default function TablePrintControls({ 
+  records = [], 
+  title, 
+  columns = [], 
+  dateField = 'created_at',
+  searchTerm = '',
+  onSearchChange
+}) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [localSearch, setLocalSearch] = useState(searchTerm || '');
+
+  const handleSearchSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (onSearchChange) {
+      onSearchChange(localSearch.trim());
+    }
+  };
+
+  const handleClearSearch = () => {
+    setLocalSearch('');
+    if (onSearchChange) {
+      onSearchChange('');
+    }
+  };
 
   const handlePrint = () => {
     let filteredRecords = records;
@@ -14,9 +36,15 @@ export default function TablePrintControls({ records, title, columns, dateField 
     if (endDate) {
       filteredRecords = filteredRecords.filter(r => new Date(r[dateField]) <= new Date(endDate));
     }
+    if (localSearch.trim()) {
+      const q = localSearch.toLowerCase().trim();
+      filteredRecords = filteredRecords.filter(r => {
+        return Object.values(r).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(q));
+      });
+    }
 
     if (filteredRecords.length === 0) {
-      toast.error('No records found for the selected date range.');
+      toast.error('No records found for the selected filter criteria.');
       return;
     }
 
@@ -58,7 +86,8 @@ export default function TablePrintControls({ records, title, columns, dateField 
         <body>
           <h1>${title}</h1>
           <p>Date Printed: ${new Date().toLocaleDateString()}</p>
-          ${startDate || endDate ? `<p>Filtered: ${startDate || 'Any'} to ${endDate || 'Any'}</p>` : ''}
+          ${startDate || endDate ? `<p>Filtered Date: ${startDate || 'Any'} to ${endDate || 'Any'}</p>` : ''}
+          ${localSearch ? `<p>Search Query: "${localSearch}"</p>` : ''}
           ${tableHtml}
           <div style="margin-top: 20px;">
             <button onclick="window.print()" style="padding: 10px 20px; background: #0f172a; color: white; border: none; cursor: pointer; border-radius: 4px;">Print Now</button>
@@ -70,18 +99,77 @@ export default function TablePrintControls({ records, title, columns, dateField 
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-gray)' }}>From:</label>
-        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="form-control" style={{ width: 'auto', padding: '0.35rem 0.5rem' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-gray)' }}>From:</label>
+        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="form-control" style={{ width: 'auto', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-gray)' }}>To:</label>
-        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="form-control" style={{ width: 'auto', padding: '0.35rem 0.5rem' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-gray)' }}>To:</label>
+        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="form-control" style={{ width: 'auto', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }} />
       </div>
-      <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem' }}>
+
+      <button onClick={handlePrint} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 1rem', fontSize: '0.85rem' }}>
         <Printer size={16} /> Print
       </button>
+
+      {/* Search Bar & Search Button beside Print */}
+      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <input
+            type="text"
+            placeholder="Search table..."
+            value={localSearch}
+            onChange={(e) => {
+              setLocalSearch(e.target.value);
+              if (onSearchChange) onSearchChange(e.target.value);
+            }}
+            className="form-control"
+            style={{
+              paddingLeft: '2rem',
+              paddingRight: localSearch ? '2rem' : '0.6rem',
+              paddingTop: '0.35rem',
+              paddingBottom: '0.35rem',
+              fontSize: '0.85rem',
+              width: '180px',
+              borderRadius: '0.375rem'
+            }}
+          />
+          <Search size={14} style={{ position: 'absolute', left: '0.6rem', color: '#94a3b8' }} />
+          {localSearch && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              style={{
+                position: 'absolute',
+                right: '0.4rem',
+                background: 'none',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '0.2rem',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            padding: '0.45rem 0.9rem',
+            fontSize: '0.85rem'
+          }}
+        >
+          <Search size={14} /> Search
+        </button>
+      </form>
     </div>
   );
 }

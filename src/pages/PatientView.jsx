@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Archive, UserRound, Phone, MapPin, Calendar, HeartPulse, Activity, FileText, FlaskConical, Stethoscope, FileSignature } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Archive, UserRound, Phone, MapPin, Calendar, HeartPulse, Activity, FileText, FlaskConical, Stethoscope, FileSignature, ShieldCheck } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import PatientAppointments from '../components/PatientAppointments';
 import PatientVitals from '../components/PatientVitals';
@@ -10,6 +10,7 @@ import PatientRecords from '../components/PatientRecords';
 import PatientLabs from '../components/PatientLabs';
 import PatientPrescriptions from '../components/PatientPrescriptions';
 import PatientDocuments from '../components/PatientDocuments';
+import PatientInsurance from '../components/PatientInsurance';
 import '../index.css';
 
 export default function PatientView() {
@@ -119,6 +120,7 @@ export default function PatientView() {
     { id: 'labs', label: 'Laboratory', icon: <FlaskConical size={16} /> },
     { id: 'prescriptions', label: 'Prescriptions', icon: <FileSignature size={16} /> },
     { id: 'documents', label: 'Documents', icon: <FileText size={16} /> },
+    { id: 'insurance', label: 'Insurance', icon: <ShieldCheck size={16} /> },
   ];
 
   return (
@@ -126,7 +128,7 @@ export default function PatientView() {
       
       {/* Top Header Banner */}
       <div style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border-color)', padding: '1.5rem 2rem' }}>
-        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1200px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           
           <div style={{ display: 'flex', gap: '1.5rem' }}>
             <div className="icon-primary" style={{ width: '5rem', height: '5rem', padding: '1rem', borderRadius: '50%' }}>
@@ -174,7 +176,7 @@ export default function PatientView() {
 
       {/* Navigation Tabs */}
       <div style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border-color)', padding: '0 2rem' }}>
-        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1200px', display: 'flex', flexDirection: 'row', gap: '2rem', overflowX: 'auto' }}>
+        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', flexDirection: 'row', gap: '2rem', overflowX: 'auto' }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -197,7 +199,7 @@ export default function PatientView() {
       </div>
 
       {/* Main Content Area */}
-      <div className="dashboard-container" style={{ maxWidth: '1200px', padding: '2rem', margin: '0 auto' }}>
+      <div className="dashboard-container" style={{ maxWidth: '1800px', padding: '2rem', margin: '0 auto' }}>
         
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
@@ -291,6 +293,9 @@ export default function PatientView() {
         )}
         {activeTab === 'documents' && (
           <PatientDocuments patientId={id} />
+        )}
+        {activeTab === 'insurance' && (
+          <PatientInsurance patientId={id} />
         )}
 
       </div>

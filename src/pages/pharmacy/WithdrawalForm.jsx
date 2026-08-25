@@ -324,7 +324,7 @@ export default function WithdrawalForm() {
                                 />
                               </td>
                               <td style={{ color: 'var(--text-gray)' }}>
-                                {invItem ? `$${Number(invItem.price).toFixed(2)}` : '-'}
+                                {invItem ? `₱${Number(invItem.price).toFixed(2)}` : '-'}
                               </td>
                               <td>
                                 <input
@@ -363,7 +363,7 @@ export default function WithdrawalForm() {
                     name="discount_type"
                     options={[
                       { label: 'Percentage (%)', value: 'percentage' },
-                      { label: 'Fixed Amount ($)', value: 'fixed' }
+                      { label: 'Fixed Amount (₱)', value: 'fixed' }
                     ]}
                     value={formData.discount_type}
                     onChange={handleChange}
@@ -387,7 +387,7 @@ export default function WithdrawalForm() {
                 <hr style={{ border: 0, borderTop: '1px solid var(--border-color)', margin: '0.5rem 0' }} />
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Amount Due ($)</label>
+                  <label className="form-label" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Amount Due (₱)</label>
                   <input
                     type="number"
                     name="amount_due"
@@ -399,7 +399,7 @@ export default function WithdrawalForm() {
                 </div>
 
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label">Amount Paid ($)</label>
+                  <label className="form-label">Amount Paid (₱)</label>
                   <input
                     type="number"
                     name="amount_paid"

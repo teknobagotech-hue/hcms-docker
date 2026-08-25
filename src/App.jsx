@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
+import Unauthorized from './pages/Unauthorized';
+
 import DepartmentsList from './pages/DepartmentsList';
 import DepartmentForm from './pages/DepartmentForm';
 import DepartmentView from './pages/DepartmentView';
@@ -44,6 +47,7 @@ import SuppliersList from './pages/inventory/SuppliersList';
 import SupplierForm from './pages/inventory/SupplierForm';
 import StockReceiptsList from './pages/inventory/StockReceiptsList';
 import StockReceiptForm from './pages/inventory/StockReceiptForm';
+import StockReceiptView from './pages/inventory/StockReceiptView';
 
 import PrescriptionsList from './pages/pharmacy/PrescriptionsList';
 import PrescriptionForm from './pages/pharmacy/PrescriptionForm';
@@ -52,42 +56,54 @@ import WithdrawalForm from './pages/pharmacy/WithdrawalForm';
 
 import InsuranceProvidersList from './pages/billing/InsuranceProvidersList';
 import InsuranceProviderForm from './pages/billing/InsuranceProviderForm';
+import PatientInsuranceList from './pages/billing/PatientInsuranceList';
+import PatientInsuranceForm from './pages/billing/PatientInsuranceForm';
 import BillingList from './pages/billing/BillingList';
 import BillingForm from './pages/billing/BillingForm';
 
-import { supabase } from './supabaseClient';
 import './index.css';
 
-function PrivateRoute({ children, session }) {
+function RoleGuard({ allowedRoles, children }) {
+  const { session, loading, hasRole } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--text-gray)' }}>
+        Loading permissions...
+      </div>
+    );
+  }
+
   if (!session) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedRoles && !hasRole(allowedRoles)) {
+    return children ? <LayoutWrapper>{<Unauthorized />}</LayoutWrapper> : <Unauthorized />;
+  }
+
   return children;
 }
 
-function App() {
+function LayoutWrapper({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+  return (
+    <div className="app-container">
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="main-content">
+        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        {children}
+      </div>
+    </div>
+  );
+}
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+function AppRoutes() {
+  const { session, loading } = useAuth();
 
   if (loading) {
     return (
@@ -97,31 +113,22 @@ function App() {
     );
   }
 
-  const Layout = ({ children }) => (
-    <div className="app-container">
-      <Sidebar isOpen={sidebarOpen} />
-      <div className="main-content">
-        <Header toggleSidebar={toggleSidebar} />
-        {children}
-      </div>
-    </div>
-  );
-
   return (
     <Router>
       <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/unauthorized" element={<RoleGuard><LayoutWrapper><Unauthorized /></LayoutWrapper></RoleGuard>} />
         
         {/* Dashboard Route */}
         <Route 
           path="/" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard>
+              <LayoutWrapper>
                 <Dashboard />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -129,41 +136,41 @@ function App() {
         <Route 
           path="/departments" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor']}>
+              <LayoutWrapper>
                 <DepartmentsList />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/departments/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor']}>
+              <LayoutWrapper>
                 <DepartmentForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/departments/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor']}>
+              <LayoutWrapper>
                 <DepartmentForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/departments/view/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor']}>
+              <LayoutWrapper>
                 <DepartmentView />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -171,83 +178,83 @@ function App() {
         <Route 
           path="/doctors" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'receptionist']}>
+              <LayoutWrapper>
                 <DoctorsList />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/doctors/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <DoctorForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/doctors/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <DoctorForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/doctors/view/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'receptionist']}>
+              <LayoutWrapper>
                 <DoctorView />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
-        {/* Users Routes */}
+        {/* Users Management Routes (Admin Only) */}
         <Route 
           path="/users" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <UsersList />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/users/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <UserForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/users/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <UserForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/users/view/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin']}>
+              <LayoutWrapper>
                 <UserView />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -255,11 +262,11 @@ function App() {
         <Route 
           path="/profile" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard>
+              <LayoutWrapper>
                 <Profile />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -267,49 +274,49 @@ function App() {
         <Route 
           path="/patients" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist', 'lab_technician', 'staff']}>
+              <LayoutWrapper>
                 <PatientsList />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist']}>
+              <LayoutWrapper>
                 <PatientForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist']}>
+              <LayoutWrapper>
                 <PatientForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/view/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist', 'lab_technician', 'staff']}>
+              <LayoutWrapper>
                 <PatientView />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/print/:id" 
           element={
-            <PrivateRoute session={session}>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist']}>
               <PatientPrint />
-            </PrivateRoute>
+            </RoleGuard>
           } 
         />
         
@@ -317,11 +324,11 @@ function App() {
         <Route 
           path="/patients/scan" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <DocumentScanner />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -329,11 +336,11 @@ function App() {
         <Route 
           path="/patients/:id/view/:type/:recordId" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'lab_technician']}>
+              <LayoutWrapper>
                 <RecordView />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -341,21 +348,21 @@ function App() {
         <Route 
           path="/patients/:patient_id/appointments/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist']}>
+              <LayoutWrapper>
                 <AppointmentForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/:patient_id/appointments/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse', 'receptionist']}>
+              <LayoutWrapper>
                 <AppointmentForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -363,21 +370,21 @@ function App() {
         <Route 
           path="/patients/:patient_id/vitals/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <VitalSignsForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/:patient_id/vitals/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <VitalSignsForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
@@ -385,96 +392,108 @@ function App() {
         <Route 
           path="/patients/:patient_id/records/add" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <MedicalRecordForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/:patient_id/records/edit/:id" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <MedicalRecordForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
         <Route 
           path="/patients/:patient_id/cardio/edit" 
           element={
-            <PrivateRoute session={session}>
-              <Layout>
+            <RoleGuard allowedRoles={['admin', 'doctor', 'nurse']}>
+              <LayoutWrapper>
                 <CardioHistoryForm />
-              </Layout>
-            </PrivateRoute>
+              </LayoutWrapper>
+            </RoleGuard>
           } 
         />
 
-        {/* Phase 4: Labs & Imaging Routes */}
-        <Route path="/patients/:patient_id/lab/cbc/add" element={<PrivateRoute session={session}><Layout><CBCForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/cbc/edit/:id" element={<PrivateRoute session={session}><Layout><CBCForm /></Layout></PrivateRoute>} />
+        {/* Labs & Imaging Routes */}
+        <Route path="/patients/:patient_id/lab/cbc/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><CBCForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/cbc/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><CBCForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/patients/:patient_id/lab/chem/add" element={<PrivateRoute session={session}><Layout><ChemForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/chem/edit/:id" element={<PrivateRoute session={session}><Layout><ChemForm /></Layout></PrivateRoute>} />
+        <Route path="/patients/:patient_id/lab/chem/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><ChemForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/chem/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><ChemForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/patients/:patient_id/lab/serology/add" element={<PrivateRoute session={session}><Layout><SerologyForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/serology/edit/:id" element={<PrivateRoute session={session}><Layout><SerologyForm /></Layout></PrivateRoute>} />
+        <Route path="/patients/:patient_id/lab/serology/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><SerologyForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/serology/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><SerologyForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/patients/:patient_id/lab/ua/add" element={<PrivateRoute session={session}><Layout><UrinalysisForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/ua/edit/:id" element={<PrivateRoute session={session}><Layout><UrinalysisForm /></Layout></PrivateRoute>} />
+        <Route path="/patients/:patient_id/lab/ua/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><UrinalysisForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/ua/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><UrinalysisForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/patients/:patient_id/lab/imaging/add" element={<PrivateRoute session={session}><Layout><ImagingForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/imaging/edit/:id" element={<PrivateRoute session={session}><Layout><ImagingForm /></Layout></PrivateRoute>} />
+        <Route path="/patients/:patient_id/lab/imaging/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><ImagingForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/imaging/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><ImagingForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/patients/:patient_id/lab/docs/add" element={<PrivateRoute session={session}><Layout><MedicalDocumentForm /></Layout></PrivateRoute>} />
-        <Route path="/patients/:patient_id/lab/docs/edit/:id" element={<PrivateRoute session={session}><Layout><MedicalDocumentForm /></Layout></PrivateRoute>} />
+        <Route path="/patients/:patient_id/lab/docs/add" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><MedicalDocumentForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/lab/docs/edit/:id" element={<RoleGuard allowedRoles={['admin', 'doctor', 'lab_technician']}><LayoutWrapper><MedicalDocumentForm /></LayoutWrapper></RoleGuard>} />
 
-        {/* Phase 1: Inventory & Medicines Routes */}
-        <Route path="/inventory/medicines" element={<PrivateRoute session={session}><Layout><MedicinesList /></Layout></PrivateRoute>} />
-        <Route path="/inventory/medicines/add" element={<PrivateRoute session={session}><Layout><MedicineForm /></Layout></PrivateRoute>} />
-        <Route path="/inventory/medicines/edit/:id" element={<PrivateRoute session={session}><Layout><MedicineForm /></Layout></PrivateRoute>} />
+        {/* Inventory & Medicines Routes */}
+        <Route path="/inventory/medicines" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor']}><LayoutWrapper><MedicinesList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/medicines/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><MedicineForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/medicines/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><MedicineForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/inventory/categories" element={<PrivateRoute session={session}><Layout><InventoryCategoriesList /></Layout></PrivateRoute>} />
-        <Route path="/inventory/categories/add" element={<PrivateRoute session={session}><Layout><CategoryForm /></Layout></PrivateRoute>} />
-        <Route path="/inventory/categories/edit/:id" element={<PrivateRoute session={session}><Layout><CategoryForm /></Layout></PrivateRoute>} />
+        <Route path="/inventory/categories" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryCategoriesList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/categories/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><CategoryForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/categories/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><CategoryForm /></LayoutWrapper></RoleGuard>} />
         
-        <Route path="/inventory/items" element={<PrivateRoute session={session}><Layout><InventoryItemsList /></Layout></PrivateRoute>} />
-        <Route path="/inventory/items/add" element={<PrivateRoute session={session}><Layout><InventoryItemForm /></Layout></PrivateRoute>} />
-        <Route path="/inventory/items/edit/:id" element={<PrivateRoute session={session}><Layout><InventoryItemForm /></Layout></PrivateRoute>} />
+        <Route path="/inventory/items" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemsList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/items/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/items/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemForm /></LayoutWrapper></RoleGuard>} />
 
-        {/* Phase 2: Suppliers & Stock Receipts Routes */}
-        <Route path="/inventory/suppliers" element={<PrivateRoute session={session}><Layout><SuppliersList /></Layout></PrivateRoute>} />
-        <Route path="/inventory/suppliers/add" element={<PrivateRoute session={session}><Layout><SupplierForm /></Layout></PrivateRoute>} />
-        <Route path="/inventory/suppliers/edit/:id" element={<PrivateRoute session={session}><Layout><SupplierForm /></Layout></PrivateRoute>} />
+        {/* Suppliers & Stock Receipts Routes */}
+        <Route path="/inventory/suppliers" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SuppliersList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/suppliers/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SupplierForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/suppliers/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SupplierForm /></LayoutWrapper></RoleGuard>} />
 
-        <Route path="/inventory/receipts" element={<PrivateRoute session={session}><Layout><StockReceiptsList /></Layout></PrivateRoute>} />
-        <Route path="/inventory/receipts/add" element={<PrivateRoute session={session}><Layout><StockReceiptForm /></Layout></PrivateRoute>} />
-        <Route path="/inventory/receipts/edit/:id" element={<PrivateRoute session={session}><Layout><StockReceiptForm /></Layout></PrivateRoute>} />
+        <Route path="/inventory/receipts" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptsList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/receipts/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/receipts/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/receipts/view/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptView /></LayoutWrapper></RoleGuard>} />
 
-        {/* Phase 3: Pharmacy Sales & Prescriptions */}
-        <Route path="/pharmacy/prescriptions" element={<PrivateRoute session={session}><Layout><PrescriptionsList /></Layout></PrivateRoute>} />
-        <Route path="/pharmacy/prescriptions/add" element={<PrivateRoute session={session}><Layout><PrescriptionForm /></Layout></PrivateRoute>} />
-        <Route path="/pharmacy/prescriptions/edit/:id" element={<PrivateRoute session={session}><Layout><PrescriptionForm /></Layout></PrivateRoute>} />
+        {/* Pharmacy Sales & Prescriptions */}
+        <Route path="/pharmacy/prescriptions" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor']}><LayoutWrapper><PrescriptionsList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/pharmacy/prescriptions/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor']}><LayoutWrapper><PrescriptionForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/pharmacy/prescriptions/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor']}><LayoutWrapper><PrescriptionForm /></LayoutWrapper></RoleGuard>} />
 
-        <Route path="/pharmacy/sales" element={<PrivateRoute session={session}><Layout><WithdrawalsList /></Layout></PrivateRoute>} />
-        <Route path="/pharmacy/sales/add" element={<PrivateRoute session={session}><Layout><WithdrawalForm /></Layout></PrivateRoute>} />
-        <Route path="/pharmacy/sales/edit/:id" element={<PrivateRoute session={session}><Layout><WithdrawalForm /></Layout></PrivateRoute>} />
+        <Route path="/pharmacy/sales" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><WithdrawalsList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/pharmacy/sales/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><WithdrawalForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/pharmacy/sales/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><WithdrawalForm /></LayoutWrapper></RoleGuard>} />
 
-        {/* Phase 4: Billing & Insurance */}
-        <Route path="/billing/insurance" element={<PrivateRoute session={session}><Layout><InsuranceProvidersList /></Layout></PrivateRoute>} />
-        <Route path="/billing/insurance/add" element={<PrivateRoute session={session}><Layout><InsuranceProviderForm /></Layout></PrivateRoute>} />
-        <Route path="/billing/insurance/edit/:id" element={<PrivateRoute session={session}><Layout><InsuranceProviderForm /></Layout></PrivateRoute>} />
+        {/* Billing & Insurance */}
+        <Route path="/billing/insurance" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProvidersList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/insurance/add" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProviderForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/insurance/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProviderForm /></LayoutWrapper></RoleGuard>} />
 
-        <Route path="/billing/records" element={<PrivateRoute session={session}><Layout><BillingList /></Layout></PrivateRoute>} />
-        <Route path="/billing/records/add" element={<PrivateRoute session={session}><Layout><BillingForm /></Layout></PrivateRoute>} />
-        <Route path="/billing/records/edit/:id" element={<PrivateRoute session={session}><Layout><BillingForm /></Layout></PrivateRoute>} />
+        <Route path="/billing/patient-insurance" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/patient-insurance/add" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/patient-insurance/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/patients/:patient_id/insurance/add" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceForm /></LayoutWrapper></RoleGuard>} />
+
+        <Route path="/billing/records" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingList /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/records/add" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/records/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
 
       </Routes>
     </Router>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
+}

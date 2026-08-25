@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
+import DocumentPrintModal from '../components/DocumentPrintModal';
 
 export default function RecordView() {
   const { id, type, recordId } = useParams();
@@ -10,6 +11,8 @@ export default function RecordView() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('Record Details');
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [printDocType, setPrintDocType] = useState('Medical Certificate');
 
   useEffect(() => {
     fetchRecord();
@@ -59,6 +62,13 @@ export default function RecordView() {
       navigate(-1);
     } else {
       setData(recordData);
+      if (type === 'documents' && recordData.document_type) {
+        if (recordData.document_type.toLowerCase().includes('referral')) {
+          setPrintDocType('Referral Letter');
+        } else {
+          setPrintDocType('Medical Certificate');
+        }
+      }
     }
     setLoading(false);
   };
@@ -102,30 +112,42 @@ export default function RecordView() {
     <div className="dashboard-scroll-area">
       <div style={{ padding: '0 2rem 2rem 2rem', maxWidth: '1200px', margin: '0 auto' }}>
         <div className="section-panel" style={{ backgroundColor: '#ffffff', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)', padding: '2.5rem', borderRadius: '1rem', margin: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
-          <button onClick={() => {
-            const labTypes = ['cbc', 'chem', 'serology', 'ua', 'imaging'];
-            if (labTypes.includes(type)) {
-              navigate(`/patients/view/${id}?tab=labs`);
-            } else if (type === 'appointments') {
-              navigate(`/patients/view/${id}?tab=appointments`);
-            } else if (type === 'records') {
-              navigate(`/patients/view/${id}?tab=records`);
-            } else if (type === 'prescriptions') {
-              navigate(`/patients/view/${id}?tab=prescriptions`);
-            } else if (type === 'vitals') {
-              navigate(`/patients/view/${id}?tab=vitals`);
-            } else if (type === 'documents') {
-              navigate(`/patients/view/${id}?tab=documents`);
-            } else {
-              navigate(-1);
-            }
-          }} className="icon-btn" style={{ backgroundColor: '#F1F5F9', padding: '0.5rem', borderRadius: '50%' }}>
-            <ArrowLeft size={20} />
-          </button>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-dark)', margin: 0 }}>
-            {title}
-          </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button onClick={() => {
+              const labTypes = ['cbc', 'chem', 'serology', 'ua', 'imaging'];
+              if (labTypes.includes(type)) {
+                navigate(`/patients/view/${id}?tab=labs`);
+              } else if (type === 'appointments') {
+                navigate(`/patients/view/${id}?tab=appointments`);
+              } else if (type === 'records') {
+                navigate(`/patients/view/${id}?tab=records`);
+              } else if (type === 'prescriptions') {
+                navigate(`/patients/view/${id}?tab=prescriptions`);
+              } else if (type === 'vitals') {
+                navigate(`/patients/view/${id}?tab=vitals`);
+              } else if (type === 'documents') {
+                navigate(`/patients/view/${id}?tab=documents`);
+              } else {
+                navigate(-1);
+              }
+            }} className="icon-btn" style={{ backgroundColor: '#F1F5F9', padding: '0.5rem', borderRadius: '50%' }}>
+              <ArrowLeft size={20} />
+            </button>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 600, color: 'var(--text-dark)', margin: 0 }}>
+              {title}
+            </h2>
+          </div>
+
+          {type === 'documents' && (
+            <button 
+              onClick={() => setPrintModalOpen(true)}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#0d9488' }}
+            >
+              <Printer size={16} /> Print Document
+            </button>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
@@ -152,6 +174,14 @@ export default function RecordView() {
         </div>
         </div>
       </div>
+
+      <DocumentPrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        patientId={id}
+        initialDocument={data}
+        defaultDocType={printDocType}
+      />
     </div>
   );
 }

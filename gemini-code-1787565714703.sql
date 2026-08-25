@@ -487,6 +487,9 @@ CREATE TABLE public.patient_insurance (
   patient_id integer REFERENCES public.patients(patient_id),
   insurance_provider_id integer REFERENCES public.insurance_providers(insurance_provider_id),
   insurance_number character varying,
+  coverage_details text,
+  effective_date date,
+  expiration_date date,
   status status_enum DEFAULT 'active'::status_enum,
   created_at date DEFAULT CURRENT_DATE
 );

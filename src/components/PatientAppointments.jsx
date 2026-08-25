@@ -12,7 +12,7 @@ export default function PatientAppointments({ patientId }) {
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);

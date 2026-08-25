@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Receipt } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, Receipt, Eye, Printer } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { printStockReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
 
 export default function StockReceiptsList() {
@@ -16,9 +17,9 @@ export default function StockReceiptsList() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
-  // Modal state
+  // Confirm Delete Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
 
@@ -53,6 +54,37 @@ export default function StockReceiptsList() {
     setLoading(false);
   };
 
+  const handlePrint = async (receipt) => {
+    try {
+      const { data: itemsData, error } = await supabase
+        .from('stock_receipt_items')
+        .select('*, inventory_items(item_name)')
+        .eq('receipt_id', receipt.receipt_id);
+
+      if (error) {
+        toast.error('Failed to load receipt items');
+        return;
+      }
+
+      let items = itemsData || [];
+      if (items.some(i => !i.inventory_items)) {
+        const { data: allInv } = await supabase.from('inventory_items').select('item_id, item_name');
+        if (allInv) {
+          const invMap = new Map(allInv.map(inv => [inv.item_id, inv]));
+          items = items.map(i => ({
+            ...i,
+            inventory_items: i.inventory_items || invMap.get(i.item_id)
+          }));
+        }
+      }
+
+      printStockReceipt({ receipt, items });
+    } catch (err) {
+      console.error(err);
+      toast.error('Error printing receipt.');
+    }
+  };
+
   const handleDelete = async (id) => {
     const { error } = await supabase
       .from('stock_receipts')
@@ -72,7 +104,7 @@ export default function StockReceiptsList() {
     if (action === 'delete') {
       setModalConfig({
         title: 'Delete Stock Receipt',
-        message: `Are you sure you want to permanently delete receipt "${receipt.reference_number}"? This action cannot be undone.`,
+        message: `Are you sure you want to permanently delete receipt "${receipt.reference_number || receipt.receipt_id}"? This action cannot be undone.`,
         confirmText: 'Delete',
         confirmType: 'danger',
         onConfirm: () => handleDelete(receipt.receipt_id)
@@ -142,7 +174,7 @@ export default function StockReceiptsList() {
                     <td>{new Date(receipt.receipt_date).toLocaleDateString()}</td>
                     <td style={{ fontWeight: 500 }}>{receipt.reference_number || '-'}</td>
                     <td>{receipt.suppliers?.supplier_name || '-'}</td>
-                    <td>${Number(receipt.total_cost).toFixed(2)}</td>
+                    <td>₱{Number(receipt.total_cost).toFixed(2)}</td>
                     <td>
                       <span className="badge badge-blue">
                         {receipt.status}
@@ -150,7 +182,13 @@ export default function StockReceiptsList() {
                     </td>
                     <td>
                       <div className="table-actions">
-                        <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="icon-btn edit" title="Edit/View">
+                        <Link to={`/inventory/receipts/view/${receipt.receipt_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Receipt Details">
+                          <Eye size={18} />
+                        </Link>
+                        <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Stock Receipt" onClick={() => handlePrint(receipt)}>
+                          <Printer size={18} />
+                        </button>
+                        <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="icon-btn edit" title="Edit">
                           <Edit size={18} />
                         </Link>
                         <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', receipt)}>

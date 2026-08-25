@@ -46,7 +46,7 @@ export default function StockReceiptForm() {
       .from('stock_receipts')
       .select('*')
       .eq('receipt_id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       toast.error('Failed to load receipt details');
@@ -222,7 +222,7 @@ export default function StockReceiptForm() {
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Total Cost ($)</label>
+                <label className="form-label">Total Cost (₱)</label>
                 <input
                   type="number"
                   name="total_cost"
@@ -268,7 +268,7 @@ export default function StockReceiptForm() {
                     <tr>
                       <th style={{ width: '30%' }}>Item *</th>
                       <th style={{ width: '15%' }}>Qty *</th>
-                      <th style={{ width: '15%' }}>Unit Cost ($)</th>
+                      <th style={{ width: '15%' }}>Unit Cost (₱)</th>
                       <th style={{ width: '15%' }}>Batch No.</th>
                       <th style={{ width: '15%' }}>Expiry Date</th>
                       <th style={{ width: '10%' }}></th>

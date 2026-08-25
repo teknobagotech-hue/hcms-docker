@@ -297,7 +297,7 @@ export default function BillingForm() {
               <hr style={{ gridColumn: '1 / -1', border: 0, borderTop: '1px dashed var(--border-color)', margin: '0.5rem 0' }} />
 
               <div className="form-group" style={{ margin: 0, gridColumn: '2 / 3' }}>
-                <label className="form-label" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Total Amount Due ($)</label>
+                <label className="form-label" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Total Amount Due (₱)</label>
                 <input
                   type="number"
                   name="amount"

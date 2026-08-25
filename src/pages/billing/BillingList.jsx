@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Receipt } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, Receipt, Printer } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { printBillingReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
 
 export default function BillingList() {
@@ -15,7 +16,7 @@ export default function BillingList() {
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
@@ -136,7 +137,7 @@ export default function BillingList() {
                 <th>ID</th>
                 <th>Date</th>
                 <th>Patient</th>
-                <th>Amount ($)</th>
+                <th>Amount (₱)</th>
                 <th>Payment Status</th>
                 <th>Insurance Status</th>
                 <th>Actions</th>
@@ -157,7 +158,7 @@ export default function BillingList() {
                     <td>{bill.billing_id}</td>
                     <td>{new Date(bill.billing_date).toLocaleDateString()}</td>
                     <td style={{ fontWeight: 500 }}>{bill.patients?.first_name} {bill.patients?.last_name}</td>
-                    <td>${Number(bill.amount).toFixed(2)}</td>
+                    <td>₱{Number(bill.amount).toFixed(2)}</td>
                     <td>
                       <span className={`badge ${bill.payment_status === 'paid' ? 'badge-green' : bill.payment_status === 'partial' ? 'badge-blue' : 'badge-yellow'}`}>
                         {bill.payment_status}
@@ -170,6 +171,9 @@ export default function BillingList() {
                     </td>
                     <td>
                       <div className="table-actions">
+                        <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => printBillingReceipt({ bill })}>
+                          <Printer size={18} />
+                        </button>
                         <Link to={`/billing/records/edit/${bill.billing_id}`} className="icon-btn edit" title="Edit">
                           <Edit size={18} />
                         </Link>

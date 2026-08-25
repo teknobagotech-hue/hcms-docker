@@ -17,7 +17,7 @@ export default function PatientsList() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function PatientsList() {
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    query = query.range(from, to).order('last_name', { ascending: true });
+    query = query.range(from, to).order('created_at', { ascending: false }).order('patient_id', { ascending: false });
 
     const { data, count, error } = await query;
 

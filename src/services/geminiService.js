@@ -25,6 +25,7 @@ export const parseDocumentData = async (fileBuffer) => {
           properties: {
             firstName: { type: SchemaType.STRING },
             lastName: { type: SchemaType.STRING },
+            address: { type: SchemaType.STRING },
             dateOfBirth: { type: SchemaType.STRING, description: "YYYY-MM-DD format if possible" },
             gender: { type: SchemaType.STRING },
             contactNumber: { type: SchemaType.STRING },
@@ -55,7 +56,8 @@ export const parseDocumentData = async (fileBuffer) => {
               medicationName: { type: SchemaType.STRING },
               dosage: { type: SchemaType.STRING },
               frequency: { type: SchemaType.STRING },
-              duration: { type: SchemaType.STRING }
+              duration: { type: SchemaType.STRING },
+              instructions: { type: SchemaType.STRING }
             }
           }
         },
@@ -138,6 +140,7 @@ export const parseDocumentData = async (fileBuffer) => {
                   hematocrit: { type: SchemaType.STRING },
                   plateletCount: { type: SchemaType.STRING },
                   segmenters: { type: SchemaType.STRING },
+                  neutrophils: { type: SchemaType.STRING },
                   lymphocytes: { type: SchemaType.STRING },
                   monocytes: { type: SchemaType.STRING },
                   eosinophils: { type: SchemaType.STRING }
@@ -157,12 +160,28 @@ export const parseDocumentData = async (fileBuffer) => {
                   ionizedCalcium: { type: SchemaType.STRING },
                   bun: { type: SchemaType.STRING },
                   uricAcid: { type: SchemaType.STRING },
+                  phosphorous: { type: SchemaType.STRING },
+                  sgptAlt: { type: SchemaType.STRING },
+                  sgotAst: { type: SchemaType.STRING },
+                  hba1c: { type: SchemaType.STRING },
                   fbs: { type: SchemaType.STRING },
                   rbs: { type: SchemaType.STRING },
                   totalCholesterol: { type: SchemaType.STRING },
                   triglycerides: { type: SchemaType.STRING },
                   hdl: { type: SchemaType.STRING },
-                  ldl: { type: SchemaType.STRING }
+                  ldl: { type: SchemaType.STRING },
+                  vldl: { type: SchemaType.STRING },
+                  cholHdlRatio: { type: SchemaType.STRING },
+                  dDimer: { type: SchemaType.STRING },
+                  procalcitonin: { type: SchemaType.STRING },
+                  albumin: { type: SchemaType.STRING },
+                  tropI: { type: SchemaType.STRING },
+                  proBnp: { type: SchemaType.STRING },
+                  ptpaPatient: { type: SchemaType.STRING },
+                  ptpaControl: { type: SchemaType.STRING },
+                  percentActivity: { type: SchemaType.STRING },
+                  inr: { type: SchemaType.STRING },
+                  ptpaRatio: { type: SchemaType.STRING }
                 }
               }
             },
@@ -210,18 +229,116 @@ export const parseDocumentData = async (fileBuffer) => {
     });
 
     const prompt = `
-      Extract the structured data according to the schema from the following patient medical document. 
-      If any information is missing, leave the field empty or an empty array.
+      Extract structured patient and clinical data from the following medical document according to the schema.
+      
+      Parsing rules:
+      1. Patient Profile:
+         - Separate name into firstName and lastName (e.g., "DICHOSO, WILMA C." -> lastName: "DICHOSO", firstName: "WILMA C.").
+         - Extract address if present.
+         - Convert dates (e.g. Birthdate "August 1, 1948", Visit dates) into standard YYYY-MM-DD format (e.g. "1948-08-01").
+         - Extract contactNumber, occupation, knownAllergies, pastMedicalHistory (include Medical Diagnosis / Medical History), surgicalHistory, smokingHistory, alcoholicIntake.
+      2. Prescriptions:
+         - Extract ALL prescribed medications (e.g. under "MEDICATIONS" section or in consultations).
+         - Separate medicationName (e.g. "Valsartan + Sacubutril (Sanare)", "Cilnidipine (Cildine)") from dosage (e.g. "200mg/tab", "20 mg/tab").
+         - Extract frequency (e.g. "2 x a day", "once a day 6pm"), duration (e.g. "1 day"), and instructions if present.
+      3. Medical Records & Consultations:
+         - Extract latest consultation chief complaint (S-O) and diagnosis (A) along with visitDate.
+      4. Lab Flow Sheets & Vital Signs:
+         - Extract all historical records for Vital Signs, CBC, Blood Chemistry, Serology, Urinalysis, and Imaging/X-Ray reports.
+         - For Lab Flow Sheets formatted as matrices/tables with dates as column headers (e.g., 07/14/2025, 07/22/2025...) and lab tests as rows (e.g., Creatinine, Sodium, Potassium, SGPT/ALT, HbA1c, Pro-BNP, etc.), create a separate object per DATE column in the chemistry or cbc array with all test values corresponding to that specific date.
+         - Pay close attention to extracting ALL Chemistry parameters: Creatinine, Sodium, Potassium, Chloride, Ionized Calcium, BUN, Uric Acid, Phosphorous, SGPT/ALT (sgptAlt), SGOT/AST (sgotAst), HbA1c (hba1c), FBS (fbs), RBS (rbs), Total Cholesterol (totalCholesterol), Triglycerides (triglycerides), HDL (hdl), LDL (ldl), VLDL (vldl), CHOL/HDL Ratio (cholHdlRatio), D-Dimer (dDimer), Procalcitonin (procalcitonin), Albumin (albumin), Trop-I (tropI), Pro-BNP (proBnp), PTPA Patient (ptpaPatient), PTPA Control (ptpaControl), Percent Activity / % Activity (percentActivity), INR (inr), PTPA Ratio (ptpaRatio).
+         - For CBC, extract WBC, RBC, Hemoglobin, Hematocrit, Platelet Count, Segmenters, Neutrophils, Lymphocytes, Monocytes, Eosinophils.
+
+      If any field is not present in the document, leave it empty or as an empty array.
+      
       Document text:
       ${text}
     `;
 
-    const response = await model.generateContent(prompt);
-    const parsedData = JSON.parse(response.response.text());
-    return parsedData;
+    try {
+      const response = await model.generateContent(prompt);
+      let jsonText = response.response.text();
+      jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+      const parsedData = JSON.parse(jsonText);
+      if (parsedData && parsedData.patient) {
+        return parsedData;
+      }
+    } catch (geminiError) {
+      console.warn("Gemini AI parse error, using text fallback:", geminiError);
+    }
+
+    return parseTextFallback(text);
 
   } catch (error) {
-    console.error("Error parsing document with Gemini:", error);
+    console.error("Error reading file with mammoth:", error);
     throw error;
   }
+};
+
+const parseTextFallback = (text) => {
+  const data = {
+    patient: { firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '', occupation: '', knownAllergies: '', pastMedicalHistory: '', surgicalHistory: '', smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: '' },
+    medicalRecord: { chiefComplaint: '', diagnosis: '', visitDate: '' },
+    prescriptions: [],
+    imagingReports: { ultrasoundReports: [], arterialDuplexScan: [], venousDuplexScan: [], xrayReports: [] },
+    vitalSigns: [],
+    labs: { cbc: [], chemistry: [], serology: [], urinalysis: [] }
+  };
+
+  if (!text) return data;
+
+  // Name (e.g. "NAME: DICHOSO, WILMA C.")
+  const nameMatch = text.match(/NAME:\s*([^\r\n]+)/i);
+  if (nameMatch) {
+    const rawName = nameMatch[1].trim();
+    if (rawName.includes(',')) {
+      const parts = rawName.split(',');
+      data.patient.lastName = parts[0].trim();
+      data.patient.firstName = parts[1].trim();
+    } else {
+      const parts = rawName.split(' ');
+      data.patient.lastName = parts.pop() || '';
+      data.patient.firstName = parts.join(' ') || '';
+    }
+  }
+
+  // Address
+  const addrMatch = text.match(/ADDRESS:\s*([^\r\n]+)/i);
+  if (addrMatch) data.patient.address = addrMatch[1].trim();
+
+  // Birthdate
+  const dobMatch = text.match(/BIRTHDATE:\s*([^\r\n]+)/i);
+  if (dobMatch) data.patient.dateOfBirth = dobMatch[1].trim();
+
+  // Gender
+  const sexMatch = text.match(/(?:SEX|GENDER):\s*([^\r\n]+)/i);
+  if (sexMatch) data.patient.gender = sexMatch[1].trim();
+
+  // Contact
+  const phoneMatch = text.match(/CONTACT\s*NUMBER:\s*([^\r\n]+)/i);
+  if (phoneMatch) data.patient.contactNumber = phoneMatch[1].trim();
+
+  // Medical History / Diagnosis
+  const diagMatch = text.match(/MEDICAL\s*DIAGNOSIS:\s*([^\r\n]+)/i);
+  if (diagMatch) data.patient.pastMedicalHistory = diagMatch[1].trim();
+
+  // Prescriptions
+  const medSectionMatch = text.match(/MEDICATIONS:\s*([\s\S]*?)(?:PREVIOUS|SURGICAL|ALLERGIES|LMP|CONSULTATIONS|LAB FLOW|$)/i);
+  if (medSectionMatch) {
+    const lines = medSectionMatch[1].split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+    data.prescriptions = lines.map(line => {
+      const dosageMatch = line.match(/^(.+?)\s+((?:\d+[\/\d]*\s*(?:mg|g|mcg|ml|tab|sachet)?)|(?:sachet)|(?:\d+.*))$/i);
+      if (dosageMatch) {
+        return {
+          medicationName: dosageMatch[1].trim(),
+          dosage: dosageMatch[2].trim(),
+          frequency: '',
+          duration: ''
+        };
+      }
+      return { medicationName: line, dosage: '', frequency: '', duration: '' };
+    });
+  }
+
+  return data;
 };

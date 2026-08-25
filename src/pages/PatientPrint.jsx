@@ -8,13 +8,16 @@ export default function PatientPrint() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     patient: null,
+    cardio: null,
     vitals: [],
     cbc: [],
     chem: [],
     serology: [],
     ua: [],
     imaging: [],
-    docs: []
+    docs: [],
+    records: [],
+    appointments: []
   });
 
   useEffect(() => {
@@ -32,7 +35,10 @@ export default function PatientPrint() {
       serologyRes, 
       uaRes, 
       imagingRes,
-      docsRes
+      docsRes,
+      recordsRes,
+      appointmentsRes,
+      cardioRes
     ] = await Promise.all([
       supabase.from('patients').select('*').eq('patient_id', id).single(),
       supabase.from('vital_signs').select('*').eq('patient_id', id).order('record_date', { ascending: false }),
@@ -41,7 +47,10 @@ export default function PatientPrint() {
       supabase.from('lab_serology').select('*').eq('patient_id', id).order('test_date', { ascending: false }),
       supabase.from('lab_urinalysis').select('*').eq('patient_id', id).order('test_date', { ascending: false }),
       supabase.from('imaging_reports').select('*').eq('patient_id', id).order('record_date', { ascending: false }),
-      supabase.from('medical_documents').select('*').eq('patient_id', id).order('issue_date', { ascending: false })
+      supabase.from('medical_documents').select('*').eq('patient_id', id).order('issue_date', { ascending: false }),
+      supabase.from('medical_records').select('*, doctors(first_name, last_name, specialty)').eq('patient_id', id).order('record_date', { ascending: false }),
+      supabase.from('appointments').select('*, doctors(first_name, last_name, specialty)').eq('patient_id', id).order('appointment_date', { ascending: false }),
+      supabase.from('patient_cardio_history').select('*').eq('patient_id', id).maybeSingle()
     ]);
 
     setData({
@@ -52,7 +61,10 @@ export default function PatientPrint() {
       serology: serologyRes.data || [],
       ua: uaRes.data || [],
       imaging: imagingRes.data || [],
-      docs: docsRes.data || []
+      docs: docsRes.data || [],
+      records: recordsRes.data || [],
+      appointments: appointmentsRes.data || [],
+      cardio: cardioRes.data || null
     });
 
     setLoading(false);
@@ -66,7 +78,7 @@ export default function PatientPrint() {
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Preparing document...</div>;
   if (!data.patient) return <div style={{ padding: '2rem', textAlign: 'center' }}>Patient not found.</div>;
 
-  const { patient, vitals, cbc, chem, serology, ua, imaging, docs } = data;
+  const { patient, vitals, cbc, chem, serology, ua, imaging, docs, records, appointments, cardio } = data;
 
   const calculateAge = (dob) => {
     if (!dob) return '';
@@ -75,17 +87,69 @@ export default function PatientPrint() {
     return Math.abs(age_dt.getUTCFullYear() - 1970);
   };
 
+  const allCbcColumns = [
+    { label: 'DATE', key: 'test_date', render: l => new Date(l.test_date).toLocaleDateString() },
+    { label: 'WBC', key: 'wbc' },
+    { label: 'RBC', key: 'rbc' },
+    { label: 'Hgb', key: 'hemoglobin' },
+    { label: 'Hct', key: 'hematocrit' },
+    { label: 'Plt', key: 'platelet_count' },
+    { label: 'Seg', key: 'segmenters' },
+    { label: 'Neutrophils', key: 'neutrophils' },
+    { label: 'Lymphs', key: 'lymphocytes' },
+    { label: 'Mono', key: 'monocytes' },
+    { label: 'Eos', key: 'eosinophils' }
+  ];
+  const activeCbcCols = allCbcColumns.filter(c => c.key === 'test_date' || cbc.some(l => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
+
+  const allChemColumns = [
+    { label: 'DATE', key: 'test_date', render: l => new Date(l.test_date).toLocaleDateString() },
+    { label: 'Creatinine', key: 'creatinine' },
+    { label: 'Na', key: 'sodium' },
+    { label: 'K', key: 'potassium' },
+    { label: 'Cl', key: 'chloride' },
+    { label: 'iCa', key: 'ionized_calcium' },
+    { label: 'BUN', key: 'bun' },
+    { label: 'UA', key: 'uric_acid' },
+    { label: 'Phos', key: 'phosphorous' },
+    { label: 'SGPT', key: 'sgpt_alt' },
+    { label: 'SGOT', key: 'sgot_ast' },
+    { label: 'HbA1c', key: 'hba1c' },
+    { label: 'FBS', key: 'fbs' },
+    { label: 'RBS', key: 'rbs' },
+    { label: 'Chol', key: 'total_cholesterol' },
+    { label: 'Trig', key: 'triglycerides' },
+    { label: 'HDL', key: 'hdl' },
+    { label: 'LDL', key: 'ldl' },
+    { label: 'VLDL', key: 'vldl' },
+    { label: 'Chol/HDL', key: 'chol_hdl_ratio' },
+    { label: 'D-Dimer', key: 'd_dimer' },
+    { label: 'Procalcitonin', key: 'procalcitonin' },
+    { label: 'Albumin', key: 'albumin' },
+    { label: 'Trop-I', key: 'trop_i' },
+    { label: 'Pro-BNP', key: 'pro_bnp' },
+    { label: 'PTPA Pat', key: 'ptpa_patient' },
+    { label: 'PTPA Ctrl', key: 'ptpa_control' },
+    { label: '% Act', key: 'percent_activity' },
+    { label: 'INR', key: 'inr' },
+    { label: 'PTPA Ratio', key: 'ptpa_ratio' }
+  ];
+  const activeChemCols = allChemColumns.filter(c => c.key === 'test_date' || chem.some(l => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
+
   return (
     <div className="print-container" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
       <style>
         {`
           @media print {
-            body { background: white; margin: 0; padding: 0; }
-            .print-container { padding: 0 !important; width: 100% !important; max-width: 100% !important; }
-            @page { margin: 1.5cm; }
+            body { background: white; margin: 0; padding: 0; font-size: 10pt; }
+            .print-container { padding: 0 !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
+            @page { margin: 1cm; size: auto; }
             .page-break { page-break-before: always; }
             .no-break { page-break-inside: avoid; }
             button { display: none !important; }
+            .print-table-wrapper { overflow: visible !important; width: 100% !important; }
+            .print-table { width: 100% !important; font-size: 8pt !important; table-layout: auto !important; }
+            .print-table th, .print-table td { padding: 3px 5px !important; white-space: nowrap !important; }
           }
           .print-header { text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
           .print-title { font-size: 1.25rem; font-weight: bold; margin: 0 0 0.5rem 0; }
@@ -137,75 +201,118 @@ export default function PatientPrint() {
             <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>General Medical History</h3>
             <p style={{ margin: '0.35rem 0' }}><strong>Medical History:</strong> {patient.medical_history || 'N/A'}</p>
             <p style={{ margin: '0.35rem 0' }}><strong>Surgical History:</strong> {patient.surgical_history || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Allergies:</strong> {patient.allergies || 'None'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Alcohol Intake:</strong> {patient.alcoholic_intake || 'N/A'}</p>
+            <p style={{ margin: '0.35rem 0' }}><strong>Known Allergies:</strong> {patient.allergies || 'N/A'}</p>
             <p style={{ margin: '0.35rem 0' }}><strong>Smoking History:</strong> {patient.smoking_history || 'N/A'}</p>
-          </div>
-
-          {/* OBGYN & Emergency */}
-          <div>
-            {patient.gender === 'Female' && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>OBGYN History</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <p style={{ margin: '0.35rem 0' }}><strong>Gravida:</strong> {patient.gravida || '-'}</p>
-                  <p style={{ margin: '0.35rem 0' }}><strong>Para:</strong> {patient.para || '-'}</p>
-                  <p style={{ margin: '0.35rem 0' }}><strong>LMP:</strong> {patient.lmp || '-'}</p>
-                  <p style={{ margin: '0.35rem 0' }}><strong>Menopause Age:</strong> {patient.menopause_age || '-'}</p>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>Emergency Contact</h3>
-              <p style={{ margin: '0.35rem 0' }}><strong>Name:</strong> {patient.emergency_contact_name || 'N/A'}</p>
-              <p style={{ margin: '0.35rem 0' }}><strong>Relationship:</strong> {patient.emergency_contact_relationship || 'N/A'}</p>
-              <p style={{ margin: '0.35rem 0' }}><strong>Phone:</strong> {patient.emergency_contact_phone || 'N/A'}</p>
-              {patient.emergency_contact_address && <p style={{ margin: '0.35rem 0' }}><strong>Address:</strong> {patient.emergency_contact_address}</p>}
-            </div>
-          </div>
-          
-          {/* Guardian Information */}
-          <div>
-            <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>Guardian Information (If minor)</h3>
-            {patient.guardian_name ? (
-              <>
-                <p style={{ margin: '0.35rem 0' }}><strong>Name:</strong> {patient.guardian_name}</p>
-                <p style={{ margin: '0.35rem 0' }}><strong>Relationship:</strong> {patient.guardian_relationship || 'N/A'}</p>
-                <p style={{ margin: '0.35rem 0' }}><strong>Phone:</strong> {patient.guardian_phone || 'N/A'}</p>
-                {patient.guardian_address && <p style={{ margin: '0.35rem 0' }}><strong>Address:</strong> {patient.guardian_address}</p>}
-              </>
-            ) : (
-              <p style={{ margin: '0.35rem 0', color: '#666' }}>No guardian specified</p>
-            )}
+            <p style={{ margin: '0.35rem 0' }}><strong>Alcohol Intake:</strong> {patient.alcoholic_intake || 'N/A'}</p>
           </div>
         </div>
       </div>
 
-      {/* Vitals */}
+      {/* Cardiovascular History */}
+      {cardio && (
+        <div className="no-break" style={{ marginBottom: '2rem' }}>
+          <h2 className="section-title">CARDIOVASCULAR HISTORY</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0.25rem 0' }}><strong>Smoker Status:</strong> {cardio.smoker_status || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Hypertension:</strong> {cardio.hypertension ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Diabetes:</strong> {cardio.diabetes ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Family History Heart Disease:</strong> {cardio.family_history_heart_disease ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Previous Heart Attack:</strong> {cardio.previous_heart_attack ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Pacemaker Details:</strong> {cardio.pacemaker_details || 'N/A'}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Clinical Encounters (Medical Records) */}
+      {records.length > 0 && (
+        <div className="no-break">
+          <h2 className="section-title">CLINICAL ENCOUNTERS (MEDICAL RECORDS)</h2>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th style={{ width: '15%' }}>DATE</th>
+                <th style={{ width: '20%' }}>ATTENDING DOCTOR</th>
+                <th style={{ width: '25%' }}>CHIEF COMPLAINT</th>
+                <th style={{ width: '20%' }}>DIAGNOSIS</th>
+                <th style={{ width: '20%' }}>PLAN / DETAILS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map(r => {
+                const planOrDetails = [
+                  r.plan ? `Plan: ${r.plan}` : null,
+                  r.treatment ? `Treatment: ${r.treatment}` : null,
+                  r.subjective ? `Subjective: ${r.subjective}` : null,
+                  r.objective ? `Objective: ${r.objective}` : null,
+                  r.assessment ? `Assessment: ${r.assessment}` : null
+                ].filter(Boolean).join('\n');
+
+                return (
+                  <tr key={r.record_id}>
+                    <td>{r.record_date ? new Date(r.record_date).toLocaleDateString() : '-'}</td>
+                    <td>{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap' }}>{r.chief_complaint || '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap' }}>{r.diagnosis || '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap' }}>{planOrDetails || '-'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Appointment History */}
+      {appointments.length > 0 && (
+        <div className="no-break">
+          <h2 className="section-title">APPOINTMENT HISTORY</h2>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th style={{ width: '22%' }}>DATE & TIME</th>
+                <th style={{ width: '25%' }}>DOCTOR</th>
+                <th style={{ width: '38%' }}>PURPOSE</th>
+                <th style={{ width: '15%' }}>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {appointments.map(appt => (
+                <tr key={appt.appointment_id}>
+                  <td>{appt.appointment_date ? new Date(appt.appointment_date).toLocaleString() : '-'}</td>
+                  <td>{appt.doctors ? `Dr. ${appt.doctors.first_name} ${appt.doctors.last_name}${appt.doctors.specialty ? ` (${appt.doctors.specialty})` : ''}` : 'Unassigned'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap' }}>{appt.purpose || '-'}</td>
+                  <td style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{appt.status || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Vital Signs */}
       {vitals.length > 0 && (
         <div className="no-break">
-          <h2 className="section-title">VITAL SIGNS</h2>
+          <h2 className="section-title">VITAL SIGNS LOG</h2>
           <table className="print-table">
             <thead>
               <tr>
                 <th>DATE</th>
-                <th>WEIGHT</th>
                 <th>BP</th>
-                <th>SpO2</th>
-                <th>PR</th>
-                <th>Temp</th>
+                <th>PULSE</th>
+                <th>SPO2</th>
+                <th>TEMP</th>
+                <th>WEIGHT</th>
               </tr>
             </thead>
             <tbody>
               {vitals.map(v => (
                 <tr key={v.vital_id}>
                   <td>{new Date(v.record_date).toLocaleDateString()}</td>
-                  <td>{v.weight_kg ? `${v.weight_kg} kg` : '-'}</td>
                   <td>{v.bp || '-'}</td>
-                  <td>{v.spo2 ? `${v.spo2}%` : '-'}</td>
                   <td>{v.pr || '-'}</td>
-                  <td>{v.temperature_c ? `${v.temperature_c} C` : '-'}</td>
+                  <td>{v.spo2 || '-'}</td>
+                  <td>{v.temperature_c || '-'}</td>
+                  <td>{v.weight_kg || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -217,38 +324,28 @@ export default function PatientPrint() {
       {cbc.length > 0 && (
         <div className="no-break">
           <h2 className="section-title">LAB FLOW SHEET - COMPLETE BLOOD COUNT</h2>
-          <table className="print-table">
-            <thead>
-              <tr>
-                <th>DATE</th>
-                <th>WBC</th>
-                <th>RBC</th>
-                <th>Hgb</th>
-                <th>Hct</th>
-                <th>Plt</th>
-                <th>Neutrophils</th>
-                <th>Lymphs</th>
-                <th>Mono</th>
-                <th>Eos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cbc.map(l => (
-                <tr key={l.cbc_id}>
-                  <td>{new Date(l.test_date).toLocaleDateString()}</td>
-                  <td>{l.wbc || '-'}</td>
-                  <td>{l.rbc || '-'}</td>
-                  <td>{l.hemoglobin || '-'}</td>
-                  <td>{l.hematocrit || '-'}</td>
-                  <td>{l.platelet_count || '-'}</td>
-                  <td>{l.neutrophils || '-'}</td>
-                  <td>{l.lymphocytes || '-'}</td>
-                  <td>{l.monocytes || '-'}</td>
-                  <td>{l.eosinophils || '-'}</td>
+          <div className="print-table-wrapper" style={{ width: '100%' }}>
+            <table className="print-table">
+              <thead>
+                <tr>
+                  {activeCbcCols.map(col => (
+                    <th key={col.key}>{col.label}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {cbc.map(l => (
+                  <tr key={l.cbc_id}>
+                    {activeCbcCols.map(col => (
+                      <td key={col.key}>
+                        {col.render ? col.render(l) : (l[col.key] !== null && l[col.key] !== undefined && l[col.key] !== '' ? l[col.key] : '-')}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -256,43 +353,23 @@ export default function PatientPrint() {
       {chem.length > 0 && (
         <div className="no-break">
           <h2 className="section-title">BLOOD CHEMISTRY</h2>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="print-table-wrapper" style={{ width: '100%' }}>
             <table className="print-table">
               <thead>
                 <tr>
-                  <th>DATE</th>
-                  <th>Creatinine</th>
-                  <th>Na</th>
-                  <th>K</th>
-                  <th>Cl</th>
-                  <th>FBS</th>
-                  <th>HbA1c</th>
-                  <th>Chol</th>
-                  <th>Trig</th>
-                  <th>HDL</th>
-                  <th>LDL</th>
-                  <th>AST</th>
-                  <th>ALT</th>
-                  <th>Uric Acid</th>
+                  {activeChemCols.map(col => (
+                    <th key={col.key}>{col.label}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {chem.map(l => (
                   <tr key={l.chem_id}>
-                    <td>{new Date(l.test_date).toLocaleDateString()}</td>
-                    <td>{l.creatinine || '-'}</td>
-                    <td>{l.sodium || '-'}</td>
-                    <td>{l.potassium || '-'}</td>
-                    <td>{l.chloride || '-'}</td>
-                    <td>{l.fbs || '-'}</td>
-                    <td>{l.hba1c || '-'}</td>
-                    <td>{l.total_cholesterol || '-'}</td>
-                    <td>{l.triglycerides || '-'}</td>
-                    <td>{l.hdl || '-'}</td>
-                    <td>{l.ldl || '-'}</td>
-                    <td>{l.sgot_ast || '-'}</td>
-                    <td>{l.sgpt_alt || '-'}</td>
-                    <td>{l.uric_acid || '-'}</td>
+                    {activeChemCols.map(col => (
+                      <td key={col.key}>
+                        {col.render ? col.render(l) : (l[col.key] !== null && l[col.key] !== undefined && l[col.key] !== '' ? l[col.key] : '-')}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -365,18 +442,17 @@ export default function PatientPrint() {
             <thead>
               <tr>
                 <th style={{ width: '15%' }}>DATE</th>
-                <th style={{ width: '25%' }}>MODALITY & LOCATION</th>
-                <th style={{ width: '60%' }}>IMPRESSION</th>
+                <th style={{ width: '20%' }}>MODALITY</th>
+                <th style={{ width: '20%' }}>LOCATION</th>
+                <th style={{ width: '45%' }}>IMPRESSION</th>
               </tr>
             </thead>
             <tbody>
               {imaging.map(img => (
                 <tr key={img.imaging_id}>
                   <td>{img.record_date ? new Date(img.record_date).toLocaleDateString() : '-'}</td>
-                  <td>
-                    <strong>{img.modality || '-'}</strong>
-                    {img.location && <div>{img.location}</div>}
-                  </td>
+                  <td>{img.modality || '-'}</td>
+                  <td>{img.location || '-'}</td>
                   <td style={{ whiteSpace: 'pre-wrap' }}>{img.impression || '-'}</td>
                 </tr>
               ))}
@@ -384,32 +460,33 @@ export default function PatientPrint() {
           </table>
         </div>
       )}
-      
-      {/* Medical Documents */}
+
+      {/* Documents */}
       {docs.length > 0 && (
         <div className="no-break">
-          <h2 className="section-title">MEDICAL DOCUMENTS (CERTIFICATES & REFERRALS)</h2>
-          {docs.map(doc => (
-            <div key={doc.document_id} style={{ marginBottom: '1rem', border: '1px solid #ddd', padding: '1rem' }}>
-              <p style={{ fontWeight: 'bold', margin: '0 0 0.5rem 0' }}>{doc.document_type === 'AI Scanner Result' ? 'Scanner Result' : doc.document_type} - {new Date(doc.issue_date).toLocaleDateString()}</p>
-              {doc.referred_to_doctor && <p><strong>Referred To:</strong> {doc.referred_to_doctor}</p>}
-              {doc.purpose && <p><strong>Purpose:</strong> {doc.purpose}</p>}
-              <p><strong>Diagnosis/Impression:</strong><br/>{doc.diagnosis_impression === 'Document auto-parsed via Gemini AI' ? 'Document auto-parsed' : (doc.diagnosis_impression || '-')}</p>
-              <p><strong>Remarks/Recommendations:</strong><br/>{doc.remarks_recommendations || '-'}</p>
-            </div>
-          ))}
+          <h2 className="section-title">MEDICAL DOCUMENTS & CERTIFICATES</h2>
+          <table className="print-table">
+            <thead>
+              <tr>
+                <th style={{ width: '20%' }}>ISSUE DATE</th>
+                <th style={{ width: '25%' }}>TYPE</th>
+                <th style={{ width: '30%' }}>PURPOSE</th>
+                <th style={{ width: '25%' }}>DIAGNOSIS / IMPRESSION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {docs.map(doc => (
+                <tr key={doc.document_id}>
+                  <td>{doc.issue_date ? new Date(doc.issue_date).toLocaleDateString() : '-'}</td>
+                  <td>{doc.document_type || '-'}</td>
+                  <td>{doc.purpose || '-'}</td>
+                  <td>{doc.diagnosis_impression || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-      
-      <div style={{ textAlign: 'center', marginTop: '2rem' }} className="no-print">
-        <button 
-          onClick={() => window.print()}
-          className="btn btn-primary"
-          style={{ padding: '0.75rem 2rem', fontSize: '1rem', cursor: 'pointer' }}
-        >
-          Print Document
-        </button>
-      </div>
     </div>
   );
 }

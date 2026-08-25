@@ -17,7 +17,7 @@ export default function InventoryItemsList() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -184,7 +184,7 @@ export default function InventoryItemsList() {
                         {item.quantity_in_stock} {item.unit}
                       </span>
                     </td>
-                    <td>${Number(item.price).toFixed(2)}</td>
+                    <td>₱{Number(item.price).toFixed(2)}</td>
                     <td>
                       <span className={`badge ${item.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: item.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: item.status === 'active' ? '#1D4ED8' : '#64748B' }}>
                         {item.status}

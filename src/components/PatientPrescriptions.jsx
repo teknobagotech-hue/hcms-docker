@@ -11,6 +11,10 @@ export default function PatientPrescriptions({ patientId }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const limit = 10;
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -23,20 +27,25 @@ export default function PatientPrescriptions({ patientId }) {
 
   useEffect(() => {
     fetchPrescriptions();
-  }, [patientId]);
+  }, [page, patientId]);
 
   const fetchPrescriptions = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, count, error } = await supabase
       .from('prescriptions')
-      .select('*, doctors(first_name, last_name)')
+      .select('*, doctors(first_name, last_name)', { count: 'exact' })
       .eq('patient_id', patientId)
+      .range(from, to)
       .order('prescription_date', { ascending: false });
 
     if (error) {
       toast.error('Failed to load prescriptions');
     } else {
       setPrescriptions(data);
+      setTotalCount(count);
     }
     setLoading(false);
   };
@@ -81,7 +90,7 @@ export default function PatientPrescriptions({ patientId }) {
       .select('*, medicines(medicine_name)')
       .eq('prescription_id', prescription.prescription_id);
 
-    let itemsHtml = prescription.notes ? `<div style="font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">Notes: ${prescription.notes}</div>` : '';
+    let itemsHtml = (prescription.notes && !prescription.notes.includes('Extracted from document')) ? `<div style="font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">Notes: ${prescription.notes}</div>` : '';
     
     if (items && items.length > 0) {
       itemsHtml += items.map((item, i) => {
@@ -256,6 +265,16 @@ export default function PatientPrescriptions({ patientId }) {
           )}
         </tbody>
       </table>
+
+      {Math.ceil(totalCount / limit) > 1 && (
+        <div className="pagination" style={{ marginTop: '1rem' }}>
+          <button className="page-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>Prev</button>
+          {Array.from({ length: Math.ceil(totalCount / limit) }, (_, i) => i + 1).map(num => (
+            <button key={num} className={`page-btn ${page === num ? 'active' : ''}`} onClick={() => setPage(num)}>{num}</button>
+          ))}
+          <button className="page-btn" disabled={page === Math.ceil(totalCount / limit)} onClick={() => setPage(page + 1)}>Next</button>
+        </div>
+      )}
 
       <ConfirmModal 
         isOpen={modalOpen} 

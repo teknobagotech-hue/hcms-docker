@@ -32,7 +32,7 @@ export default function CardioHistoryForm() {
       .from('patient_cardio_history')
       .select('*')
       .eq('patient_id', patient_id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       setFormData({

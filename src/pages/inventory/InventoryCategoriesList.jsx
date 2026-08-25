@@ -16,7 +16,7 @@ export default function InventoryCategoriesList() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);

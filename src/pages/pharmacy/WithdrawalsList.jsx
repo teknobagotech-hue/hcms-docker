@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, ShoppingCart } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ShoppingCart, Printer } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { printPharmacyReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
 
 export default function WithdrawalsList() {
@@ -15,7 +16,7 @@ export default function WithdrawalsList() {
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
@@ -53,6 +54,41 @@ export default function WithdrawalsList() {
       setTotalCount(count);
     }
     setLoading(false);
+  };
+
+  const handlePrintReceipt = async (sale) => {
+    try {
+      // Fetch withdrawal items with linked inventory items info
+      const { data: itemsData, error } = await supabase
+        .from('inventory_withdrawal_items')
+        .select('*, inventory_items(item_name, price, unit)')
+        .eq('withdrawal_id', sale.withdrawal_id);
+
+      if (error) {
+        toast.error('Could not load sale items for receipt.');
+        console.error(error);
+        return;
+      }
+
+      let items = itemsData || [];
+      
+      // Fallback if inventory_items join was not returned directly
+      if (items.some(i => !i.inventory_items)) {
+        const { data: allInv } = await supabase.from('inventory_items').select('item_id, item_name, price, unit');
+        if (allInv) {
+          const invMap = new Map(allInv.map(inv => [inv.item_id, inv]));
+          items = items.map(i => ({
+            ...i,
+            inventory_items: i.inventory_items || invMap.get(i.item_id)
+          }));
+        }
+      }
+
+      printPharmacyReceipt({ sale, items });
+    } catch (err) {
+      console.error(err);
+      toast.error('Error generating receipt.');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -161,7 +197,7 @@ export default function WithdrawalsList() {
                       <td>{new Date(sale.withdrawal_date).toLocaleDateString()}</td>
                       <td style={{ fontWeight: 500 }}>{customerName}</td>
                       <td style={{ textTransform: 'capitalize' }}>{sale.sale_type}</td>
-                      <td>${Number(sale.amount_due).toFixed(2)}</td>
+                      <td>₱{Number(sale.amount_due).toFixed(2)}</td>
                       <td>
                         <span className={`badge ${sale.payment_status === 'paid' ? 'badge-green' : 'badge-yellow'}`}>
                           {sale.payment_status}
@@ -174,6 +210,9 @@ export default function WithdrawalsList() {
                       </td>
                       <td>
                         <div className="table-actions">
+                          <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => handlePrintReceipt(sale)}>
+                            <Printer size={18} />
+                          </button>
                           <Link to={`/pharmacy/sales/edit/${sale.withdrawal_id}`} className="icon-btn edit" title="Edit/View">
                             <Edit size={18} />
                           </Link>
