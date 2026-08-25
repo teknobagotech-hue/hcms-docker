@@ -87,7 +87,7 @@ export default function InventoryCategoriesList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Tags className="text-primary" size={24} />
@@ -101,7 +101,7 @@ export default function InventoryCategoriesList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -114,45 +114,47 @@ export default function InventoryCategoriesList() {
             </div>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Category Name</th>
-                <th>Created At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Category Name</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
                 </tr>
-              ) : categories.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No categories found.</td>
-                </tr>
-              ) : (
-                categories.map(cat => (
-                  <tr key={cat.category_id}>
-                    <td>{cat.category_id}</td>
-                    <td style={{ fontWeight: 500 }}>{cat.category_name}</td>
-                    <td>{new Date(cat.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/inventory/categories/edit/${cat.category_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', cat)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : categories.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No categories found.</td>
+                  </tr>
+                ) : (
+                  categories.map(cat => (
+                    <tr key={cat.category_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{cat.category_id}</td>
+                      <td style={{ fontWeight: 500 }}>{cat.category_name}</td>
+                      <td>{cat.created_at ? new Date(cat.created_at).toLocaleDateString() : '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/inventory/categories/edit/${cat.category_id}`} className="icon-btn edit" title="Edit">
+                            <Edit size={18} />
+                          </Link>
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', cat)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

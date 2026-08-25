@@ -128,14 +128,14 @@ export default function PatientView() {
       
       {/* Top Header Banner */}
       <div style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border-color)', padding: '1.5rem 2rem' }}>
-        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="dashboard-container patient-header-banner" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           
-          <div style={{ display: 'flex', gap: '1.5rem' }}>
-            <div className="icon-primary" style={{ width: '5rem', height: '5rem', padding: '1rem', borderRadius: '50%' }}>
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div className="icon-primary" style={{ width: '5rem', height: '5rem', padding: '1rem', borderRadius: '50%', flexShrink: 0 }}>
               <UserRound size={48} strokeWidth={1.5} />
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'var(--text-dark)' }}>
                   {patient.last_name}, {patient.first_name} {patient.middle_name}
                 </h1>
@@ -144,7 +144,7 @@ export default function PatientView() {
                 </span>
               </div>
               
-              <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-gray)', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              <div className="patient-info-meta" style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-gray)', fontSize: '0.875rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}><Calendar size={14} /> {new Date(patient.date_of_birth).toLocaleDateString()} ({calculateAge(patient.date_of_birth)} yrs)</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}><HeartPulse size={14} /> {patient.gender || 'Unspecified'}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}><Phone size={14} /> {patient.contact_number || 'No phone'}</span>
@@ -154,7 +154,7 @@ export default function PatientView() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="patient-action-btns" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button 
               onClick={() => window.open(`/patients/print/${patient.patient_id}`, '_blank')}
               className="btn btn-secondary" 
@@ -175,24 +175,25 @@ export default function PatientView() {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border-color)', padding: '0 2rem' }}>
-        <div className="dashboard-container" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', flexDirection: 'row', gap: '2rem', overflowX: 'auto' }}>
+      <div style={{ backgroundColor: '#fff', borderBottom: '1px solid var(--border-color)', padding: '0 1rem' }}>
+        <div className="dashboard-container tabs-nav-container" style={{ margin: '0 auto', maxWidth: '1800px', display: 'flex', flexDirection: 'row', gap: '1.5rem', overflowX: 'auto' }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '1rem 0',
-                background: 'none', border: 'none',
+                padding: '1rem 0.5rem', border: 'none', background: 'none', cursor: 'pointer',
                 borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
                 color: activeTab === tab.id ? 'var(--primary)' : 'var(--text-gray)',
                 fontWeight: activeTab === tab.id ? 600 : 500,
-                cursor: 'pointer', transition: 'all 0.2s ease',
-                fontSize: '0.875rem', whiteSpace: 'nowrap'
+                fontSize: '0.875rem',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease'
               }}
             >
-              {tab.icon} {tab.label}
+              {tab.icon}
+              {tab.label}
             </button>
           ))}
         </div>

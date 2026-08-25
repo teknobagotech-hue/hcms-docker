@@ -263,7 +263,7 @@ export default function PrescriptionForm() {
                 No medicines added. Click "Add Medicine".
               </div>
             ) : (
-              <div style={{ overflowX: 'auto', paddingBottom: '200px' }}>
+              <div className="table-responsive" style={{ overflowX: 'auto', paddingBottom: '200px' }}>
                 <table className="data-table" style={{ minWidth: '800px' }}>
                   <thead>
                     <tr>

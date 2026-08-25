@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Archive, Trash2, Plus, Package } from 'lucide-react';
+import { Search, Edit, Archive, Trash2, Plus, Package, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -115,7 +115,7 @@ export default function InventoryItemsList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Package className="text-primary" size={24} />
@@ -129,7 +129,7 @@ export default function InventoryItemsList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -141,7 +141,7 @@ export default function InventoryItemsList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -152,64 +152,69 @@ export default function InventoryItemsList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Item Name</th>
-                <th>Category</th>
-                <th>Stock</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Item Name</th>
+                  <th>Category</th>
+                  <th>Stock</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No inventory items found.</td>
-                </tr>
-              ) : (
-                items.map(item => (
-                  <tr key={item.item_id}>
-                    <td>{item.item_id}</td>
-                    <td style={{ fontWeight: 500 }}>{item.item_name}</td>
-                    <td>{item.inventory_categories?.category_name || '-'}</td>
-                    <td>
-                      <span style={{ color: item.quantity_in_stock <= item.reorder_level ? 'var(--danger-color)' : 'inherit', fontWeight: item.quantity_in_stock <= item.reorder_level ? 600 : 'normal' }}>
-                        {item.quantity_in_stock} {item.unit}
-                      </span>
-                    </td>
-                    <td>₱{Number(item.price).toFixed(2)}</td>
-                    <td>
-                      <span className={`badge ${item.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: item.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: item.status === 'active' ? '#1D4ED8' : '#64748B' }}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/inventory/items/edit/${item.item_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        {item.status === 'active' && (
-                          <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', item)}>
-                            <Archive size={18} />
-                          </button>
-                        )}
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', item)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No inventory items found.</td>
+                  </tr>
+                ) : (
+                  items.map(item => (
+                    <tr key={item.item_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{item.item_id}</td>
+                      <td style={{ fontWeight: 500 }}>{item.item_name}</td>
+                      <td>{item.inventory_categories?.category_name || '-'}</td>
+                      <td>
+                        <span style={{ fontWeight: 600, color: item.quantity_in_stock <= item.reorder_level ? 'var(--danger)' : 'var(--text-dark)' }}>
+                          {item.quantity_in_stock} {item.unit || ''}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 500 }}>₱{Number(item.price || 0).toFixed(2)}</td>
+                      <td>
+                        <span className={`badge ${item.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: item.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: item.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/inventory/items/view/${item.item_id}`} className="icon-btn view" title="View Item">
+                            <Eye size={18} />
+                          </Link>
+                          <Link to={`/inventory/items/edit/${item.item_id}`} className="icon-btn edit" title="Edit Item">
+                            <Edit size={18} />
+                          </Link>
+                          {item.status === 'active' && (
+                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', item)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', item)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

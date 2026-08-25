@@ -214,57 +214,56 @@ export default function PatientPrescriptions({ patientId }) {
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Date</th>
-            <th>Doctor</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
+      <div className="table-responsive">
+        <table className="data-table">
+          <thead>
             <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+              <th>ID</th>
+              <th>Date</th>
+              <th>Doctor</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ) : prescriptions.length === 0 ? (
-            <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No prescriptions found.</td>
-            </tr>
-          ) : (
-            prescriptions.map(presc => (
-              <tr key={presc.prescription_id}>
-                <td>{presc.prescription_id}</td>
-                <td>{new Date(presc.prescription_date).toLocaleDateString()}</td>
-                <td>Dr. {presc.doctors?.first_name} {presc.doctors?.last_name}</td>
-                <td>
-                  <span className={`badge ${presc.status === 'active' ? 'badge-blue' : presc.status === 'completed' ? 'badge-green' : ''}`}>
-                    {presc.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="table-actions">
-                    <Link to={`/patients/${patientId}/view/prescriptions/${presc.prescription_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View">
-                      <Eye size={16} />
-                    </Link>
-                    <button className="icon-btn" onClick={() => handlePrintRx(presc)} style={{ color: 'var(--text-gray)' }} title="Print Rx">
-                      <Printer size={16} />
-                    </button>
-                    <Link to={`/pharmacy/prescriptions/edit/${presc.prescription_id}?patientId=${patientId}`} className="icon-btn edit" title="Edit">
-                      <Edit size={16} />
-                    </Link>
-                    <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal(presc.prescription_id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : prescriptions.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No prescriptions found.</td>
+              </tr>
+            ) : (
+              prescriptions.map(presc => (
+                <tr key={presc.prescription_id}>
+                  <td style={{ color: 'var(--text-gray)' }}>#{presc.prescription_id}</td>
+                  <td>{new Date(presc.prescription_date).toLocaleDateString()}</td>
+                  <td>Dr. {presc.doctors?.first_name} {presc.doctors?.last_name}</td>
+                  <td>
+                    <span className={`badge ${presc.status === 'active' ? 'badge-blue' : presc.status === 'completed' ? 'badge-green' : ''}`}>
+                      {presc.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="table-actions">
+                      <button className="icon-btn" onClick={() => handlePrintRx(presc)} style={{ color: 'var(--text-gray)' }} title="Print Rx">
+                        <Printer size={18} />
+                      </button>
+                      <Link to={`/pharmacy/prescriptions/edit/${presc.prescription_id}`} className="icon-btn edit" title="Edit">
+                        <Edit size={18} />
+                      </Link>
+                      <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', presc)}>
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {Math.ceil(totalCount / limit) > 1 && (
         <div className="pagination" style={{ marginTop: '1rem' }}>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Archive, Trash2, Plus, ShieldPlus } from 'lucide-react';
+import { Search, Edit, Archive, Trash2, Plus, ShieldPlus, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -112,7 +112,7 @@ export default function InsuranceProvidersList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldPlus className="text-primary" size={24} />
@@ -126,7 +126,7 @@ export default function InsuranceProvidersList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -138,7 +138,7 @@ export default function InsuranceProvidersList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -149,56 +149,61 @@ export default function InsuranceProvidersList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Provider Name</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Provider Name</th>
+                  <th>Contact</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : providers.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No providers found.</td>
-                </tr>
-              ) : (
-                providers.map(prov => (
-                  <tr key={prov.insurance_provider_id}>
-                    <td>{prov.insurance_provider_id}</td>
-                    <td style={{ fontWeight: 500 }}>{prov.provider_name}</td>
-                    <td>{prov.contact_number || '-'}</td>
-                    <td>
-                      <span className={`badge ${prov.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: prov.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: prov.status === 'active' ? '#1D4ED8' : '#64748B' }}>
-                        {prov.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/billing/insurance/edit/${prov.insurance_provider_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        {prov.status === 'active' && (
-                          <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', prov)}>
-                            <Archive size={18} />
-                          </button>
-                        )}
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', prov)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : providers.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No insurance providers found.</td>
+                  </tr>
+                ) : (
+                  providers.map(prov => (
+                    <tr key={prov.insurance_provider_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{prov.insurance_provider_id}</td>
+                      <td style={{ fontWeight: 500 }}>{prov.provider_name}</td>
+                      <td>{prov.contact_number || prov.email || '-'}</td>
+                      <td>
+                        <span className={`badge ${prov.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: prov.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: prov.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                          {prov.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/billing/insurance/view/${prov.insurance_provider_id}`} className="icon-btn view" title="View Provider">
+                            <Eye size={18} />
+                          </Link>
+                          <Link to={`/billing/insurance/edit/${prov.insurance_provider_id}`} className="icon-btn edit" title="Edit Provider">
+                            <Edit size={18} />
+                          </Link>
+                          {prov.status === 'active' && (
+                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', prov)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', prov)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

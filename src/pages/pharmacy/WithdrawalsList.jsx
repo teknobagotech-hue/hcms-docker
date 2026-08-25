@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, ShoppingCart, Printer } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ShoppingCart, Printer, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printPharmacyReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -125,7 +125,7 @@ export default function WithdrawalsList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShoppingCart className="text-primary" size={24} />
@@ -139,7 +139,7 @@ export default function WithdrawalsList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -151,7 +151,7 @@ export default function WithdrawalsList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -163,70 +163,66 @@ export default function WithdrawalsList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Type</th>
-                <th>Amount Due</th>
-                <th>Payment</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Amount Due</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : withdrawals.length === 0 ? (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No sales records found.</td>
-                </tr>
-              ) : (
-                withdrawals.map(sale => {
-                  const customerName = sale.customer_id 
-                    ? `${sale.patients?.first_name} ${sale.patients?.last_name}`
-                    : sale.customer_name || 'Walk-in';
-
-                  return (
-                    <tr key={sale.withdrawal_id}>
-                      <td>{sale.withdrawal_id}</td>
-                      <td>{new Date(sale.withdrawal_date).toLocaleDateString()}</td>
-                      <td style={{ fontWeight: 500 }}>{customerName}</td>
-                      <td style={{ textTransform: 'capitalize' }}>{sale.sale_type}</td>
-                      <td>₱{Number(sale.amount_due).toFixed(2)}</td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  </tr>
+                ) : withdrawals.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No sales or withdrawals found.</td>
+                  </tr>
+                ) : (
+                  withdrawals.map(w => (
+                    <tr key={w.withdrawal_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{w.withdrawal_id}</td>
+                      <td>{new Date(w.withdrawal_date).toLocaleDateString()}</td>
+                      <td style={{ fontWeight: 500 }}>{w.customer_name || 'Walk-in'}</td>
+                      <td style={{ textTransform: 'capitalize' }}>{w.sale_type}</td>
+                      <td style={{ fontWeight: 600 }}>₱{Number(w.amount_due || 0).toFixed(2)}</td>
                       <td>
-                        <span className={`badge ${sale.payment_status === 'paid' ? 'badge-green' : 'badge-yellow'}`}>
-                          {sale.payment_status}
+                        <span className={`badge ${w.payment_status === 'paid' ? 'badge-blue' : ''}`} style={{ backgroundColor: w.payment_status === 'paid' ? '#DBEAFE' : '#FEF3C7', color: w.payment_status === 'paid' ? '#1D4ED8' : '#D97706' }}>
+                          {w.payment_status}
                         </span>
                       </td>
                       <td>
-                        <span className={`badge ${sale.status === 'completed' ? 'badge-blue' : ''}`}>
-                          {sale.status}
+                        <span className={`badge ${w.status === 'completed' ? 'badge-blue' : ''}`} style={{ backgroundColor: w.status === 'completed' ? '#DBEAFE' : w.status === 'pending' ? '#FEF3C7' : '#F1F5F9', color: w.status === 'completed' ? '#1D4ED8' : w.status === 'pending' ? '#D97706' : '#64748B' }}>
+                          {w.status}
                         </span>
                       </td>
                       <td>
                         <div className="table-actions">
-                          <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => handlePrintReceipt(sale)}>
+                          <Link to={`/pharmacy/sales/edit/${w.withdrawal_id}`} className="icon-btn view" title="View/Edit Sale">
+                            <Eye size={18} />
+                          </Link>
+                          <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => handlePrintReceipt(w)}>
                             <Printer size={18} />
                           </button>
-                          <Link to={`/pharmacy/sales/edit/${sale.withdrawal_id}`} className="icon-btn edit" title="Edit/View">
-                            <Edit size={18} />
-                          </Link>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', sale)}>
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', w)}>
                             <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

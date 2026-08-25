@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Archive } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
@@ -80,58 +80,62 @@ export default function PatientAppointments({ patientId }) {
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Date & Time</th>
-            <th>Doctor</th>
-            <th>Purpose</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
-          ) : appointments.length === 0 ? (
-            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No appointments found.</td></tr>
-          ) : (
-            appointments.map(appt => (
-              <tr key={appt.appointment_id}>
-                <td style={{ fontWeight: 500 }}>
-                  {new Date(appt.appointment_date).toLocaleString()}
-                </td>
-                <td>
-                  {appt.doctors ? `Dr. ${appt.doctors.first_name} ${appt.doctors.last_name}` : 'Unassigned'}
-                  {appt.doctors?.specialty && <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{appt.doctors.specialty}</div>}
-                </td>
-                <td>{appt.purpose}</td>
-                <td>
-                  <span className={`badge`} style={{ 
-                    backgroundColor: appt.status === 'completed' ? '#DCFCE7' : appt.status === 'cancelled' ? '#FEE2E2' : '#DBEAFE', 
-                    color: appt.status === 'completed' ? '#166534' : appt.status === 'cancelled' ? '#991B1B' : '#1D4ED8' 
-                  }}>
-                    {appt.status.toUpperCase()}
-                  </span>
-                </td>
-                <td>
-                  <div className="table-actions">
-                    <Link to={`/patients/${patientId}/view/appointments/${appt.appointment_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
-                      <Eye size={16} />
-                    </Link>
-                    <Link to={`/patients/${patientId}/appointments/edit/${appt.appointment_id}`} className="icon-btn edit">
-                      <Edit size={16} />
-                    </Link>
-                    <button className="icon-btn delete" onClick={() => { setSelectedId(appt.appointment_id); setModalOpen(true); }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="table-responsive">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>Doctor</th>
+              <th>Purpose</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+            ) : appointments.length === 0 ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No appointments found.</td></tr>
+            ) : (
+              appointments.map(appt => (
+                <tr key={appt.appointment_id}>
+                  <td style={{ fontWeight: 500 }}>
+                    {new Date(appt.appointment_date).toLocaleString()}
+                  </td>
+                  <td>
+                    {appt.doctors ? `Dr. ${appt.doctors.first_name} ${appt.doctors.last_name}` : 'Unassigned'}
+                    {appt.doctors?.specialty && <div style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>{appt.doctors.specialty}</div>}
+                  </td>
+                  <td>{appt.purpose}</td>
+                  <td>
+                    <span className={`badge`} style={{ 
+                      backgroundColor: appt.status === 'completed' ? '#DBEAFE' : appt.status === 'cancelled' ? '#FEE2E2' : '#FEF3C7',
+                      color: appt.status === 'completed' ? '#1D4ED8' : appt.status === 'cancelled' ? '#EF4444' : '#D97706'
+                    }}>
+                      {appt.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="table-actions">
+                      <Link to={`/patients/${patientId}/appointments/edit/${appt.appointment_id}`} className="icon-btn edit" title="Edit">
+                        <Edit size={18} />
+                      </Link>
+                      {appt.status === 'scheduled' && (
+                        <button className="icon-btn archive" title="Cancel Appointment" onClick={() => openConfirmModal('cancel', appt)}>
+                          <Archive size={18} />
+                        </button>
+                      )}
+                      <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', appt)}>
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {totalPages > 1 && (
         <div className="pagination" style={{ marginTop: '1rem' }}>

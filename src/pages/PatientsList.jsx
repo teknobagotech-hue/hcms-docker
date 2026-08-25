@@ -116,7 +116,7 @@ export default function PatientsList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div className="icon-primary" style={{ padding: '0.75rem', borderRadius: '0.5rem' }}>
               <Users size={24} />
@@ -132,7 +132,7 @@ export default function PatientsList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -144,7 +144,7 @@ export default function PatientsList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -155,63 +155,65 @@ export default function PatientsList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Patient ID</th>
-                <th>Name</th>
-                <th>Date of Birth</th>
-                <th>Gender</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>Patient ID</th>
+                  <th>Name</th>
+                  <th>Date of Birth</th>
+                  <th>Gender</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : patients.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No patients found.</td>
-                </tr>
-              ) : (
-                patients.map(patient => (
-                  <tr key={patient.patient_id}>
-                    <td style={{ color: 'var(--text-gray)' }}>#{patient.patient_id}</td>
-                    <td style={{ fontWeight: 500 }}>
-                      {patient.last_name}, {patient.first_name} {patient.middle_name}
-                    </td>
-                    <td>{new Date(patient.date_of_birth).toLocaleDateString()}</td>
-                    <td>{patient.gender || '-'}</td>
-                    <td>
-                      <span className={`badge ${patient.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: patient.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: patient.status === 'active' ? '#1D4ED8' : '#64748B' }}>
-                        {patient.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/patients/view/${patient.patient_id}`} className="icon-btn view" title="Clinical Dashboard">
-                          <Eye size={18} />
-                        </Link>
-                        <Link to={`/patients/edit/${patient.patient_id}`} className="icon-btn edit" title="Edit Demographics">
-                          <Edit size={18} />
-                        </Link>
-                        {patient.status === 'active' && (
-                          <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', patient)}>
-                            <Archive size={18} />
-                          </button>
-                        )}
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', patient)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : patients.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No patients found.</td>
+                  </tr>
+                ) : (
+                  patients.map(patient => (
+                    <tr key={patient.patient_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{patient.patient_id}</td>
+                      <td style={{ fontWeight: 500 }}>
+                        {patient.last_name}, {patient.first_name} {patient.middle_name}
+                      </td>
+                      <td>{new Date(patient.date_of_birth).toLocaleDateString()}</td>
+                      <td>{patient.gender || '-'}</td>
+                      <td>
+                        <span className={`badge ${patient.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: patient.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: patient.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                          {patient.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/patients/view/${patient.patient_id}`} className="icon-btn view" title="Clinical Dashboard">
+                            <Eye size={18} />
+                          </Link>
+                          <Link to={`/patients/edit/${patient.patient_id}`} className="icon-btn edit" title="Edit Demographics">
+                            <Edit size={18} />
+                          </Link>
+                          {patient.status === 'active' && (
+                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', patient)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', patient)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
              <div className="pagination">

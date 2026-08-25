@@ -97,7 +97,7 @@ export default function PatientVitals({ patientId }) {
         </div>
       </div>
 
-      <div style={{ width: '100%', overflowX: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
         <table className="data-table">
           <thead>
             <tr>

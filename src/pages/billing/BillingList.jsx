@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Receipt, Printer } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, Receipt, Printer, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printBillingReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -93,7 +93,7 @@ export default function BillingList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Receipt className="text-primary" size={24} />
@@ -107,7 +107,7 @@ export default function BillingList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -119,7 +119,7 @@ export default function BillingList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -131,62 +131,64 @@ export default function BillingList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Patient</th>
-                <th>Amount (₱)</th>
-                <th>Payment Status</th>
-                <th>Insurance Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Patient</th>
+                  <th>Amount (₱)</th>
+                  <th>Payment Status</th>
+                  <th>Insurance Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : bills.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No billing records found.</td>
-                </tr>
-              ) : (
-                bills.map(bill => (
-                  <tr key={bill.billing_id}>
-                    <td>{bill.billing_id}</td>
-                    <td>{new Date(bill.billing_date).toLocaleDateString()}</td>
-                    <td style={{ fontWeight: 500 }}>{bill.patients?.first_name} {bill.patients?.last_name}</td>
-                    <td>₱{Number(bill.amount).toFixed(2)}</td>
-                    <td>
-                      <span className={`badge ${bill.payment_status === 'paid' ? 'badge-green' : bill.payment_status === 'partial' ? 'badge-blue' : 'badge-yellow'}`}>
-                        {bill.payment_status}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${bill.insurance_claim_status === 'approved' ? 'badge-green' : bill.insurance_claim_status === 'pending' ? 'badge-yellow' : ''}`}>
-                        {bill.insurance_claim_status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => printBillingReceipt({ bill })}>
-                          <Printer size={18} />
-                        </button>
-                        <Link to={`/billing/records/edit/${bill.billing_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', bill)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : bills.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No billing records found.</td>
+                  </tr>
+                ) : (
+                  bills.map(bill => (
+                    <tr key={bill.billing_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{bill.billing_id}</td>
+                      <td>{new Date(bill.billing_date).toLocaleDateString()}</td>
+                      <td style={{ fontWeight: 500 }}>{bill.patients?.first_name} {bill.patients?.last_name}</td>
+                      <td style={{ fontWeight: 600 }}>₱{Number(bill.total_amount || 0).toFixed(2)}</td>
+                      <td>
+                        <span className={`badge ${bill.payment_status === 'paid' ? 'badge-blue' : ''}`} style={{ backgroundColor: bill.payment_status === 'paid' ? '#DBEAFE' : '#FEF3C7', color: bill.payment_status === 'paid' ? '#1D4ED8' : '#D97706' }}>
+                          {bill.payment_status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: '#F1F5F9', color: '#64748B' }}>
+                          {bill.insurance_claim_status || 'N/A'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/billing/records/view/${bill.billing_id}`} className="icon-btn view" title="View Bill">
+                            <Eye size={18} />
+                          </Link>
+                          <Link to={`/billing/records/edit/${bill.billing_id}`} className="icon-btn edit" title="Edit Bill">
+                            <Edit size={18} />
+                          </Link>
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', bill)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

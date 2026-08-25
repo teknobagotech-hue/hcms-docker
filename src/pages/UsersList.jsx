@@ -118,7 +118,7 @@ export default function UsersList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div className="icon-primary" style={{ padding: '0.75rem', borderRadius: '0.5rem' }}>
               <UserCog size={24} />
@@ -134,7 +134,7 @@ export default function UsersList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -146,7 +146,7 @@ export default function UsersList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={roleFilter}
               onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
@@ -159,61 +159,69 @@ export default function UsersList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Full Name</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
                 </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No users found.</td>
-                </tr>
-              ) : (
-                users.map(user => (
-                  <tr key={user.id}>
-                    <td style={{ fontWeight: 500 }}>
-                      {user.full_name || 'N/A'}
-                    </td>
-                    <td>{user.role || '-'}</td>
-                    <td>
-                      <span className={`badge ${user.status === 'active' || !user.status ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' || !user.status ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' || !user.status ? '#1D4ED8' : '#64748B' }}>
-                        {user.status ? user.status.toUpperCase() : 'ACTIVE'}
-                      </span>
-                    </td>
-                    <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/users/view/${user.id}`} className="icon-btn view" title="View">
-                          <Eye size={18} />
-                        </Link>
-                        <Link to={`/users/edit/${user.id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        {user.status !== 'inactive' && (
-                          <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', user)}>
-                            <Archive size={18} />
-                          </button>
-                        )}
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', user)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No users found.</td>
+                  </tr>
+                ) : (
+                  users.map((user, index) => (
+                    <tr key={user.user_id || user.id || index}>
+                      <td style={{ fontWeight: 500 }}>
+                        {user.full_name || 'N/A'}
+                      </td>
+                      <td>
+                        <span className="badge" style={{ backgroundColor: '#E2E8F0', color: '#334155' }}>
+                          {user.roles?.role_name || user.role || 'Staff'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge ${user.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                          {user.status || 'active'}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-gray)' }}>
+                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/users/view/${user.user_id}`} className="icon-btn view" title="View Details">
+                            <Eye size={18} />
+                          </Link>
+                          <Link to={`/users/edit/${user.user_id}`} className="icon-btn edit" title="Edit User">
+                            <Edit size={18} />
+                          </Link>
+                          {user.status === 'active' && (
+                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', user)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', user)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
              <div className="pagination">

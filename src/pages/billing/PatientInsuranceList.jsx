@@ -167,7 +167,7 @@ export default function PatientInsuranceList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ShieldCheck className="text-primary" size={24} />
@@ -175,7 +175,7 @@ export default function PatientInsuranceList() {
             </h1>
             <p className="card-subtitle">Manage patient health insurance records and coverage details</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div className="header-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <TablePrintControls 
               records={filteredPolicies} 
               title="Patient Insurance Registry" 
@@ -188,7 +188,7 @@ export default function PatientInsuranceList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '220px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -201,7 +201,7 @@ export default function PatientInsuranceList() {
             </div>
 
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', minWidth: '160px', paddingLeft: '1rem' }}
               value={providerFilter}
               onChange={(e) => { setProviderFilter(e.target.value); setPage(1); }}
@@ -215,7 +215,7 @@ export default function PatientInsuranceList() {
             </select>
 
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', minWidth: '140px', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -226,7 +226,7 @@ export default function PatientInsuranceList() {
             </select>
           </div>
 
-          <div style={{ width: '100%', overflowX: 'auto' }}>
+          <div className="table-responsive">
             <table className="data-table">
               <thead>
                 <tr>

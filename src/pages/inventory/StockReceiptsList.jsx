@@ -119,7 +119,7 @@ export default function StockReceiptsList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Receipt className="text-primary" size={24} />
@@ -133,7 +133,7 @@ export default function StockReceiptsList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -146,61 +146,63 @@ export default function StockReceiptsList() {
             </div>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Ref No.</th>
-                <th>Supplier</th>
-                <th>Total Cost</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Ref No.</th>
+                  <th>Supplier</th>
+                  <th>Total Cost</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : receipts.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No receipts found.</td>
-                </tr>
-              ) : (
-                receipts.map(receipt => (
-                  <tr key={receipt.receipt_id}>
-                    <td>{receipt.receipt_id}</td>
-                    <td>{new Date(receipt.receipt_date).toLocaleDateString()}</td>
-                    <td style={{ fontWeight: 500 }}>{receipt.reference_number || '-'}</td>
-                    <td>{receipt.suppliers?.supplier_name || '-'}</td>
-                    <td>₱{Number(receipt.total_cost).toFixed(2)}</td>
-                    <td>
-                      <span className="badge badge-blue">
-                        {receipt.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/inventory/receipts/view/${receipt.receipt_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Receipt Details">
-                          <Eye size={18} />
-                        </Link>
-                        <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Stock Receipt" onClick={() => handlePrint(receipt)}>
-                          <Printer size={18} />
-                        </button>
-                        <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', receipt)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : receipts.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No receipts found.</td>
+                  </tr>
+                ) : (
+                  receipts.map(receipt => (
+                    <tr key={receipt.receipt_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{receipt.receipt_id}</td>
+                      <td>{new Date(receipt.receipt_date).toLocaleDateString()}</td>
+                      <td style={{ fontWeight: 500 }}>{receipt.reference_number || '-'}</td>
+                      <td>{receipt.suppliers?.supplier_name || '-'}</td>
+                      <td style={{ fontWeight: 600 }}>₱{Number(receipt.total_cost || 0).toFixed(2)}</td>
+                      <td>
+                        <span className="badge badge-blue">
+                          {receipt.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/inventory/receipts/view/${receipt.receipt_id}`} className="icon-btn view" title="View Receipt Details">
+                            <Eye size={18} />
+                          </Link>
+                          <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Stock Receipt" onClick={() => handlePrint(receipt)}>
+                            <Printer size={18} />
+                          </button>
+                          <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="icon-btn edit" title="Edit">
+                            <Edit size={18} />
+                          </Link>
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', receipt)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

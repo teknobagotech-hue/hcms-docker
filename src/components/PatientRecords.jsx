@@ -135,56 +135,58 @@ export default function PatientRecords({ patientId }) {
           </div>
         </div>
 
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Attending Doctor</th>
-              <th>Chief Complaint</th>
-              <th>Diagnosis</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
-            ) : records.length === 0 ? (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No encounters recorded.</td></tr>
-            ) : (
-              records.map(record => (
-                <tr key={record.record_id}>
-                  <td style={{ fontWeight: 500 }}>
-                    {new Date(record.record_date).toLocaleDateString()}
-                  </td>
-                  <td>{record.doctors ? `Dr. ${record.doctors.first_name} ${record.doctors.last_name}` : '-'}</td>
-                  <td>
-                    <div style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {record.chief_complaint || '-'}
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {record.diagnosis || '-'}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="table-actions">
-                      <Link to={`/patients/${patientId}/view/records/${record.record_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
-                        <Eye size={16} />
-                      </Link>
-                      <Link to={`/patients/${patientId}/records/edit/${record.record_id}`} className="icon-btn edit">
-                        <Edit size={16} />
-                      </Link>
-                      <button className="icon-btn delete" onClick={() => { setSelectedId(record.record_id); setModalOpen(true); }}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <div className="table-responsive">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Attending Doctor</th>
+                <th>Chief Complaint</th>
+                <th>Diagnosis</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+              ) : records.length === 0 ? (
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No medical records found.</td></tr>
+              ) : (
+                records.map(rec => (
+                  <tr key={rec.record_id}>
+                    <td style={{ fontWeight: 500 }}>
+                      {new Date(rec.record_date).toLocaleDateString()}
+                    </td>
+                    <td>{rec.doctors ? `Dr. ${rec.doctors.first_name} ${rec.doctors.last_name}` : '-'}</td>
+                    <td>
+                      <div style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {rec.chief_complaint || '-'}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {rec.diagnosis || '-'}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <Link to={`/patients/${patientId}/view/records/${rec.record_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
+                          <Eye size={16} />
+                        </Link>
+                        <Link to={`/patients/${patientId}/records/edit/${rec.record_id}`} className="icon-btn edit">
+                          <Edit size={16} />
+                        </Link>
+                        <button className="icon-btn delete" onClick={() => { setSelectedId(rec.record_id); setModalOpen(true); }}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {totalPages > 1 && (
           <div className="pagination" style={{ marginTop: '1rem' }}>

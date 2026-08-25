@@ -124,54 +124,56 @@ export default function PatientDocuments({ patientId }) {
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Issue Date</th>
-            <th>Type</th>
-            <th>Purpose</th>
-            <th>Diagnosis</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
-          ) : records.length === 0 ? (
-            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No documents records found.</td></tr>
-          ) : (
-            records.map(rec => (
-              <tr key={rec.document_id}>
-                <td style={{fontWeight:500}}>{new Date(rec.issue_date).toLocaleDateString()}</td>
-                <td>{rec.document_type === 'AI Scanner Result' ? 'Scanner Result' : rec.document_type}</td>
-                <td>{rec.purpose || '-'}</td>
-                <td><div style={{maxWidth:'150px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{rec.diagnosis_impression === 'Document auto-parsed via Gemini AI' ? 'Document auto-parsed' : (rec.diagnosis_impression || '-')}</div></td>
-                <td>
-                  <div className="table-actions">
-                    <button 
-                      className="icon-btn print" 
-                      title="Print Official Document"
-                      onClick={() => handleOpenPrint(rec, rec.document_type?.toLowerCase().includes('referral') ? 'Referral Letter' : 'Medical Certificate')}
-                      style={{ color: '#0d9488' }}
-                    >
-                      <Printer size={16} />
-                    </button>
-                    <Link to={`/patients/${patientId}/view/documents/${rec.document_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Record">
-                      <Eye size={16} />
-                    </Link>
-                    <Link to={`/patients/${patientId}/lab/docs/edit/${rec.document_id}`} className="icon-btn edit" title="Edit Record">
-                      <Edit size={16} />
-                    </Link>
-                    <button className="icon-btn delete" title="Delete Record" onClick={() => { setSelectedId(rec.document_id); setModalOpen(true); }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <div className="table-responsive">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Issue Date</th>
+              <th>Type</th>
+              <th>Purpose</th>
+              <th>Diagnosis</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+            ) : records.length === 0 ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No documents records found.</td></tr>
+            ) : (
+              records.map(rec => (
+                <tr key={rec.document_id}>
+                  <td style={{fontWeight:500}}>{new Date(rec.issue_date).toLocaleDateString()}</td>
+                  <td>{rec.document_type === 'AI Scanner Result' ? 'Scanner Result' : rec.document_type}</td>
+                  <td>{rec.purpose || '-'}</td>
+                  <td><div style={{maxWidth:'150px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{rec.diagnosis_impression === 'Document auto-parsed via Gemini AI' ? 'Document auto-parsed' : (rec.diagnosis_impression || '-')}</div></td>
+                  <td>
+                    <div className="table-actions">
+                      <button 
+                        className="icon-btn print" 
+                        title="Print Official Document"
+                        onClick={() => handleOpenPrint(rec, rec.document_type?.toLowerCase().includes('referral') ? 'Referral Letter' : 'Medical Certificate')}
+                        style={{ color: '#0d9488' }}
+                      >
+                        <Printer size={16} />
+                      </button>
+                      <Link to={`/patients/${patientId}/view/documents/${rec.document_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Record">
+                        <Eye size={16} />
+                      </Link>
+                      <Link to={`/patients/${patientId}/lab/docs/edit/${rec.document_id}`} className="icon-btn edit" title="Edit Record">
+                        <Edit size={16} />
+                      </Link>
+                      <button className="icon-btn delete" title="Delete Record" onClick={() => { setSelectedId(rec.document_id); setModalOpen(true); }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {Math.ceil(totalCount / limit) > 1 && (
         <div className="pagination" style={{ marginTop: '1rem' }}>

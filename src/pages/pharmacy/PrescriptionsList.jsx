@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, FileSignature, Eye, Printer } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, FileSignature, Eye, Printer, Archive } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -223,7 +223,7 @@ export default function PrescriptionsList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FileSignature className="text-primary" size={24} />
@@ -237,7 +237,7 @@ export default function PrescriptionsList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -249,7 +249,7 @@ export default function PrescriptionsList() {
               />
             </div>
             <select
-              className="form-input"
+              className="form-input filter-select"
               style={{ width: 'auto', paddingLeft: '1rem' }}
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
@@ -261,59 +261,74 @@ export default function PrescriptionsList() {
             </select>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Date</th>
-                <th>Patient Name</th>
-                <th>Doctor</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Date</th>
+                  <th>Patient Name</th>
+                  <th>Doctor</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ) : prescriptions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No prescriptions found.</td>
-                </tr>
-              ) : (
-                prescriptions.map(presc => (
-                  <tr key={presc.prescription_id}>
-                    <td>{presc.prescription_id}</td>
-                    <td>{new Date(presc.prescription_date).toLocaleDateString()}</td>
-                    <td style={{ fontWeight: 500 }}>{presc.patients?.first_name} {presc.patients?.last_name}</td>
-                    <td>Dr. {presc.doctors?.first_name} {presc.doctors?.last_name}</td>
-                    <td>
-                      <span className={`badge ${presc.status === 'active' ? 'badge-blue' : presc.status === 'completed' ? 'badge-green' : ''}`}>
-                        {presc.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/patients/${presc.patient_id}/view/prescriptions/${presc.prescription_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View">
-                          <Eye size={18} />
-                        </Link>
-                        <button className="icon-btn" onClick={() => handlePrintRx(presc)} style={{ color: 'var(--text-gray)' }} title="Print Rx">
-                          <Printer size={18} />
-                        </button>
-                        <Link to={`/pharmacy/prescriptions/edit/${presc.prescription_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', presc)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : prescriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No prescriptions found.</td>
+                  </tr>
+                ) : (
+                  prescriptions.map(rx => (
+                    <tr key={rx.prescription_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{rx.prescription_id}</td>
+                      <td>{new Date(rx.prescription_date).toLocaleDateString()}</td>
+                      <td style={{ fontWeight: 500 }}>
+                        {rx.patients ? `${rx.patients.last_name}, ${rx.patients.first_name}` : 'Unknown Patient'}
+                      </td>
+                      <td>{rx.doctors ? `Dr. ${rx.doctors.last_name}` : '-'}</td>
+                      <td>
+                        <span className={`badge ${rx.status === 'completed' ? 'badge-blue' : ''}`} style={{ backgroundColor: rx.status === 'completed' ? '#DBEAFE' : rx.status === 'active' ? '#E0F7F6' : '#F1F5F9', color: rx.status === 'completed' ? '#1D4ED8' : rx.status === 'active' ? '#0EBAB1' : '#64748B' }}>
+                          {rx.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <button 
+                            className="icon-btn view" 
+                            title="Print Prescription"
+                            onClick={() => handlePrintRx(rx)}
+                          >
+                            <Printer size={18} />
+                          </button>
+                          {rx.status === 'active' && (
+                            <button 
+                              className="icon-btn archive" 
+                              title="Cancel Prescription" 
+                              onClick={() => openConfirmModal('cancel', rx)}
+                            >
+                              <Archive size={18} />
+                            </button>
+                          )}
+                          <button 
+                            className="icon-btn delete" 
+                            title="Delete Prescription" 
+                            onClick={() => openConfirmModal('delete', rx)}
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">

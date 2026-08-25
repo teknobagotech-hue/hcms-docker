@@ -1077,14 +1077,63 @@ body {
 .table-responsive,
 .table-container {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 1rem;
+  border-radius: 0.5rem;
+}
+
+.data-table-wrapper::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.data-table-wrapper::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
 }
 
 .data-table,
 .premium-table {
+  width: 100%;
   min-width: 600px;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+/* Page Header & Filter Toolbars */
+.page-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.filter-toolbar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tabs-nav-container {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
 }
 
 /* Sidebar Overlay Backdrop for Mobile */
@@ -1155,6 +1204,30 @@ body {
     grid-template-columns: 1fr !important;
   }
 
+  .page-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .page-header-flex .btn,
+  .page-header-flex button,
+  .page-header-flex a {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-toolbar > * {
+    width: 100% !important;
+  }
+
   .search-input-wrapper,
   .search-box,
   .filter-select {
@@ -1166,6 +1239,29 @@ body {
   .action-buttons {
     width: 100%;
     justify-content: space-between;
+  }
+
+  /* Patient Header Profile Cards */
+  .patient-header-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1.25rem !important;
+  }
+
+  .patient-info-meta {
+    flex-wrap: wrap !important;
+    gap: 0.75rem 1.25rem !important;
+  }
+
+  .patient-action-btns {
+    width: 100% !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+
+  .patient-action-btns > * {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   /* Form Layout Grid Responsiveness */
@@ -1183,9 +1279,10 @@ body {
     max-width: 92vw !important;
     margin: 1rem !important;
     padding: 1.25rem !important;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
-  /* Patient Header Profile Cards */
   .patient-header-card {
     flex-direction: column !important;
     align-items: center !important;
@@ -1231,4 +1328,5 @@ body {
     font-size: 0.8125rem;
   }
 }
+
 

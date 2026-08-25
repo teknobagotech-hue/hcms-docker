@@ -372,7 +372,7 @@ export default function PatientLabs({ patientId }) {
     <div className="section-panel" style={{ margin: 0 }}>
       
       {/* Category Pills */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+      <div className="tabs-nav-container" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
         {categories.map(cat => (
           <button 
             key={cat.id} 
@@ -382,7 +382,8 @@ export default function PatientLabs({ patientId }) {
               padding: '0.5rem 1rem', borderRadius: '2rem', border: 'none', cursor: 'pointer',
               backgroundColor: activeCategory === cat.id ? 'var(--primary)' : '#F1F5F9',
               color: activeCategory === cat.id ? '#fff' : 'var(--text-gray)',
-              fontWeight: 500, fontSize: '0.875rem', transition: 'all 0.2s ease'
+              fontWeight: 500, fontSize: '0.875rem', transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
             }}
           >
             {cat.icon} {cat.label}
@@ -409,7 +410,7 @@ export default function PatientLabs({ patientId }) {
         </div>
       </div>
 
-      <div style={{ width: '100%', overflowX: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+      <div className="table-responsive" style={{ width: '100%', overflowX: 'auto', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
         <table className="data-table" style={{ width: '100%', minWidth: activeCategory === 'chem' ? '2200px' : activeCategory === 'cbc' ? '1200px' : activeCategory === 'ua' ? '1200px' : '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
           <thead>
             {renderTableHeaders()}

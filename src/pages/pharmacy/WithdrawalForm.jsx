@@ -298,7 +298,7 @@ export default function WithdrawalForm() {
                     No items added. Click "Add Item".
                   </div>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="table-responsive">
                     <table className="data-table" style={{ marginBottom: 0 }}>
                       <thead>
                         <tr>

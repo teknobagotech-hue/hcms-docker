@@ -34,57 +34,59 @@ export default function UpcomingAppointments() {
         </h2>
         <Link to="/appointments" className="section-link" style={{ textDecoration: 'none', color: 'var(--primary-color)', fontSize: '0.875rem', fontWeight: 500 }}>View All &gt;</Link>
       </div>
-      
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Patient Name</th>
-            <th>Doctor</th>
-            <th>Date & Time</th>
-            <th>Reason</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem' }}>Loading appointments...</td>
-            </tr>
-          ) : appointments.length === 0 ? (
-            <tr>
-              <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-light)' }}>No upcoming appointments found.</td>
-            </tr>
-          ) : (
-            appointments.map(app => {
-              const patientName = app.patients ? `${app.patients.first_name} ${app.patients.last_name}` : 'Patient';
-              const doctorName = app.doctors ? `Dr. ${app.doctors.first_name} ${app.doctors.last_name}` : 'Doctor';
-              const initials = app.patients ? `${app.patients.first_name[0] || ''}${app.patients.last_name[0] || ''}` : 'PT';
 
-              return (
-                <tr key={app.appointment_id}>
-                  <td>
-                    <div className="patient-info">
-                      <div className="patient-avatar-placeholder">{initials}</div>
-                      {patientName}
-                    </div>
-                  </td>
-                  <td>{doctorName}</td>
-                  <td>
-                    {app.appointment_date ? new Date(app.appointment_date).toLocaleDateString() : '-'}<br/>
-                    <span style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>{app.appointment_time || 'Scheduled'}</span>
-                  </td>
-                  <td>{app.reason_for_visit || 'Consultation'}</td>
-                  <td>
-                    <span className={`badge ${app.status === 'completed' ? 'badge-green' : app.status === 'cancelled' ? '' : 'badge-blue'}`}>
-                      {app.status || 'scheduled'}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+      <div className="table-responsive">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Patient Name</th>
+              <th>Doctor</th>
+              <th>Date & Time</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem' }}>Loading appointments...</td>
+              </tr>
+            ) : appointments.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-light)' }}>No upcoming appointments found.</td>
+              </tr>
+            ) : (
+              appointments.map(app => {
+                const patientName = app.patients ? `${app.patients.first_name} ${app.patients.last_name}` : 'Patient';
+                const doctorName = app.doctors ? `Dr. ${app.doctors.first_name} ${app.doctors.last_name}` : 'Doctor';
+                const initials = app.patients ? `${app.patients.first_name[0] || ''}${app.patients.last_name[0] || ''}` : 'PT';
+
+                return (
+                  <tr key={app.appointment_id}>
+                    <td>
+                      <div className="patient-info">
+                        <div className="patient-avatar-placeholder">{initials}</div>
+                        {patientName}
+                      </div>
+                    </td>
+                    <td>{doctorName}</td>
+                    <td>
+                      {app.appointment_date ? new Date(app.appointment_date).toLocaleDateString() : '-'}<br/>
+                      <span style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>{app.appointment_time || 'Scheduled'}</span>
+                    </td>
+                    <td>{app.reason_for_visit || 'Consultation'}</td>
+                    <td>
+                      <span className={`badge ${app.status === 'completed' ? 'badge-green' : app.status === 'cancelled' ? '' : 'badge-blue'}`}>
+                        {app.status || 'scheduled'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -87,7 +87,7 @@ export default function MedicinesList() {
     <div className="dashboard-scroll-area">
       <div className="dashboard-container">
         
-        <div className="section-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="page-header-flex">
           <div>
             <h1 className="section-title" style={{ fontSize: '1.5rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Pill className="text-primary" size={24} />
@@ -101,7 +101,7 @@ export default function MedicinesList() {
         </div>
 
         <div className="section-panel">
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="filter-toolbar">
             <div className="input-wrapper" style={{ flex: 1, minWidth: '200px' }}>
               <Search className="input-icon" size={16} />
               <input
@@ -114,47 +114,49 @@ export default function MedicinesList() {
             </div>
           </div>
 
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Medicine Name</th>
-                <th>Dosage Form</th>
-                <th>Strength</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
+                  <th>ID</th>
+                  <th>Medicine Name</th>
+                  <th>Dosage Form</th>
+                  <th>Strength</th>
+                  <th>Actions</th>
                 </tr>
-              ) : medicines.length === 0 ? (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No medicines found.</td>
-                </tr>
-              ) : (
-                medicines.map(med => (
-                  <tr key={med.medicine_id}>
-                    <td>{med.medicine_id}</td>
-                    <td style={{ fontWeight: 500 }}>{med.medicine_name}</td>
-                    <td>{med.dosage_form || '-'}</td>
-                    <td>{med.strength || '-'}</td>
-                    <td>
-                      <div className="table-actions">
-                        <Link to={`/inventory/medicines/edit/${med.medicine_id}`} className="icon-btn edit" title="Edit">
-                          <Edit size={18} />
-                        </Link>
-                        <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', med)}>
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : medicines.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No medicines found.</td>
+                  </tr>
+                ) : (
+                  medicines.map(med => (
+                    <tr key={med.medicine_id}>
+                      <td style={{ color: 'var(--text-gray)' }}>#{med.medicine_id}</td>
+                      <td style={{ fontWeight: 500 }}>{med.medicine_name}</td>
+                      <td>{med.dosage_form || '-'}</td>
+                      <td>{med.strength || '-'}</td>
+                      <td>
+                        <div className="table-actions">
+                          <Link to={`/inventory/medicines/edit/${med.medicine_id}`} className="icon-btn edit" title="Edit">
+                            <Edit size={18} />
+                          </Link>
+                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', med)}>
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {totalPages > 1 && (
             <div className="pagination">
