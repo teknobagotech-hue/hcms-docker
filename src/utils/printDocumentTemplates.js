@@ -65,10 +65,10 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
     <body>
       <div style="max-width: 750px; margin: 0 auto;">
         <div class="doc-header-name">
-          GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
+          GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM
         </div>
         <div class="doc-specialty">
-          <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
+          Internal Medicine, Adult Cardiology, Vascular Medicine<br/>
           Fellow, Philippine College of Physician<br/>
           Fellow, Philippine College of Cardiology<br/>
           Fellow, Philippine Society of Vascular Medicine
@@ -91,42 +91,45 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
           </div>
         </div>
 
-        <div class="doc-title">Medical Certificate</div>
+        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 32px; font-style: italic; font-weight: normal;">Medical Certificate</div>
 
-        <div class="date-row">
-          Date: <span class="underline-text" style="min-width: 140px;">${issueDate}</span>
+        <div class="date-row" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          Date: <span class="underline-text" style="min-width: 140px; font-weight: normal;">${issueDate}</span>
         </div>
 
-        <div class="salutation">To whom it may concern,</div>
+        <div class="salutation" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">To whom it may concern,</div>
 
-        <div class="cert-body">
-          This is to certify that <span class="underline-text" style="min-width: 250px;">${patientName}</span>, <span class="underline-text" style="min-width: 50px;">${patientAge}</span> years old,<br/>
-          residing at <span class="underline-text" style="min-width: 420px;">${patientAddress}</span><br/>
-          had consulted with the undersigned on <span class="underline-text" style="min-width: 220px;">${consultDate}</span>.
+        <div class="cert-body" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          This is to certify that <span class="underline-text" style="min-width: 250px; font-weight: normal;">${patientName}</span>, <span class="underline-text" style="min-width: 50px; font-weight: normal;">${patientAge}</span> years old,<br/>
+          residing at <span class="underline-text" style="min-width: 420px; font-weight: normal;">${patientAddress}</span><br/>
+          had consulted with the undersigned on <span class="underline-text" style="min-width: 220px; font-weight: normal;">${consultDate}</span>.
         </div>
 
-        <div class="section-label">Impression/Diagnosis:</div>
-        <div class="content-box">${diagnosis || '&nbsp;'}</div>
+        <div class="section-label" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-weight: normal;">Impression/Diagnosis:</div>
+        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none;">${diagnosis || '&nbsp;'}</div>
 
-        <div class="section-label">Remarks/ Recommendations:</div>
-        <div class="content-box">${remarks || '&nbsp;'}</div>
+        <div class="section-label" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-weight: normal;">Remarks/ Recommendations:</div>
+        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none;">${remarks || '&nbsp;'}</div>
 
-        <div class="checklist">
-          <div><span class="chk-box">${advisedRest ? '✓' : '___'}</span> Advised rest for <span class="underline-text" style="min-width: 80px;">${restDays || '________'}</span> days.</div>
+        <div class="checklist" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          <div><span class="chk-box">${advisedRest ? '✓' : '___'}</span> Advised rest for <span class="underline-text" style="min-width: 80px; font-weight: normal;">${restDays || '________'}</span> days.</div>
           <div><span class="chk-box">${fitEmployment ? '✓' : '___'}</span> Fit for employment.</div>
-          <div><span class="chk-box">${avoidStrenuous ? '✓' : '___'}</span> Avoid strenuous activities such as <span class="underline-text" style="min-width: 260px;">${strenuousText || '____________________'}</span>.</div>
+          <div><span class="chk-box">${avoidStrenuous ? '✓' : '___'}</span> Avoid strenuous activities such as <span class="underline-text" style="min-width: 260px; font-weight: normal;">${strenuousText || '____________________'}</span>.</div>
           <div><span class="chk-box">${financialAssistance ? '✓' : '___'}</span> For Financial/ Medical assistance.</div>
         </div>
 
-        <div class="disclaimer">
-          This certificate is being issued upon the request of the above-mentioned name for whatever purpose may serve best (excluding legal matters).
+        <div class="disclaimer" style="font-size: 9px; color: #333;">
+          The certificate is being issued upon the request of the above-mentioned name for whatever purpose may serve best (excluding legal matters).
         </div>
 
-        <div class="signature-block">
-          <strong>DR. GLADDAYS CASUGA-NAPIGKIT</strong><br/>
-          Internist-Cardiologist-Vascular Specialist<br/>
-          Lic #: 0110138<br/>
-          PTR #: 6226871
+        <div class="signature-block" style="float: right; width: 320px; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; text-align: center;">
+          <div>DR. GLADDAYS CASUGA-NAPIGKIT</div>
+          <div>Internist-Cardiologist-Vascular</div>
+          <div style="text-align: left; padding-left: 20px;">Specialist</div>
+          <div style="padding-left: 40px;">
+            Lic #: 0110138<br/>
+            PTR #: 6226871
+          </div>
         </div>
         <div class="clear"></div>
 
@@ -193,10 +196,10 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
     <body>
       <div style="max-width: 750px; margin: 0 auto;">
         <div class="doc-header-name">
-          GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
+          GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM
         </div>
         <div class="doc-specialty">
-          <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
+          Internal Medicine, Adult Cardiology, Vascular Medicine<br/>
           Fellow, Philippine College of Physician<br/>
           Fellow, Philippine College of Cardiology<br/>
           Fellow, Philippine Society of Vascular Medicine
@@ -219,40 +222,43 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
           </div>
         </div>
 
-        <div class="doc-title">Referral Letter</div>
+        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 32px; font-style: italic; font-weight: normal;">Referral Letter</div>
 
-        <div class="date-row">
-          Date: <span class="underline-text" style="min-width: 140px;">${issueDate}</span>
+        <div class="date-row" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          Date: <span class="underline-text" style="min-width: 140px; font-weight: normal;">${issueDate}</span>
         </div>
 
-        <div class="to-dr">
-          To Dr. <span class="underline-text" style="min-width: 300px;">${referredToDoctor}</span>,
+        <div class="to-dr" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          To Dr. <span class="underline-text" style="min-width: 300px; font-weight: normal;">${referredToDoctor}</span>,
         </div>
 
-        <div class="ref-body">
-          Respectfully referring <span class="underline-text" style="min-width: 400px;">${patientName}</span><br/>
-          For <span class="underline-text" style="min-width: 520px;">${purpose}</span>.<br/><br/>
+        <div class="ref-body" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          Respectfully referring <span class="underline-text" style="min-width: 400px; font-weight: normal;">${patientName}</span><br/>
+          For <span class="underline-text" style="min-width: 520px; font-weight: normal;">${purpose}</span>.<br/><br/>
 
-          Patient came in at my clinic <span class="underline-text" style="min-width: 200px;">${clinicOrDate}</span> due to <span class="underline-text" style="min-width: 300px;">${complaints}</span><br/>
-          and is found to have <span class="underline-text" style="min-width: 480px;">${diagnosis}</span>.<br/><br/>
+          Patient came in at my clinic <span class="underline-text" style="min-width: 200px; font-weight: normal;">${clinicOrDate}</span> due to <span class="underline-text" style="min-width: 300px; font-weight: normal;">${complaints}</span> and is<br/>
+          found to have <span class="underline-text" style="min-width: 480px; font-weight: normal;">${diagnosis}</span>.<br/><br/>
 
           hence this referral.
         </div>
 
-        <div class="closing">
-          Thank you very much,
+        <div class="closing" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
+          Thank you very much.
         </div>
 
-        <div class="signature-block">
-          <strong>DR. GLADDAYS CASUGA-NAPIGKIT</strong><br/>
-          Internist-Cardiologist-Vascular Specialist<br/>
-          Lic #: 0110138<br/>
-          PTR #: 6226871
+        <div class="signature-block" style="float: right; width: 320px; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; text-align: center;">
+          <div>DR. GLADDAYS CASUGA-NAPIGKIT</div>
+          <div>Internist-Cardiologist-Vascular</div>
+          <div style="text-align: left; padding-left: 20px;">Specialist</div>
+          <div style="padding-left: 40px;">
+            Lic #: 0110138<br/>
+            PTR #: 6226871
+          </div>
         </div>
         <div class="clear"></div>
 
-        <div class="quote-footer">
-          “A merry heart doeth good like a medicine.” <u>Proverbs</u> 17:22
+        <div class="quote-footer" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 14px;">
+          “A merry heart doeth good like a medicine.” <span style="border-bottom: 1px solid red; padding-bottom: 1px;">Proverbs</span> 17:22
         </div>
 
         <div class="no-print" style="margin-top: 30px; text-align: center;">
