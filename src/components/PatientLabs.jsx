@@ -437,8 +437,8 @@ export default function PatientLabs({ patientId }) {
             ) : displayedRecords.length === 0 ? (
               <tr><td colSpan={getColCount()} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>{searchTerm ? `No records matching "${searchTerm}"` : `No ${currentCat.label} records found.`}</td></tr>
             ) : (
-              displayedRecords.map(rec => (
-                <tr key={rec[currentCat.idField]}>
+              displayedRecords.map((rec, index) => (
+                <tr key={rec[currentCat.idField] || rec.id || `${activeCategory}-${index}`}>
                   {renderRowData(rec)}
                   <td style={{ textAlign: 'center' }}>
                     <div className="table-actions" style={{ justifyContent: 'center' }}>

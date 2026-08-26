@@ -88,7 +88,15 @@ export default function PatientPrescriptions({ patientId }) {
       .select('*, medicines(medicine_name)')
       .eq('prescription_id', prescription.prescription_id);
 
-    const doctor = prescription.doctors || null;
+    let doctor = prescription.doctors || null;
+    if (prescription.doctor_id) {
+      const { data: docData } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('doctor_id', prescription.doctor_id)
+        .single();
+      if (docData) doctor = docData;
+    }
 
     printPrescription({ patient, prescription, items, doctor });
   };

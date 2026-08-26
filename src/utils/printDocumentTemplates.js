@@ -56,8 +56,8 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
         .clear { clear: both; }
 
         @media print {
-          body { padding: 0; margin: 0; }
-          @page { margin: 1.2cm; size: A4 portrait; }
+          @page { margin: 0; size: A4 portrait; }
+          body { padding: 1.2cm; margin: 0; }
           .no-print { display: none !important; }
         }
       </style>
@@ -130,7 +130,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
         </div>
         <div class="clear"></div>
 
-        <div className="no-print" style="margin-top: 30px; text-align: center;">
+        <div class="no-print" style="margin-top: 30px; text-align: center;">
           <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">
             Print Medical Certificate
           </button>
@@ -184,8 +184,8 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
         .clear { clear: both; }
 
         @media print {
-          body { padding: 0; margin: 0; }
-          @page { margin: 1.2cm; size: A4 portrait; }
+          @page { margin: 0; size: A4 portrait; }
+          body { padding: 1.2cm; margin: 0; }
           .no-print { display: none !important; }
         }
       </style>
@@ -713,10 +713,6 @@ export function printStockReceipt({ receipt, items = [] }) {
           <p style="margin: 0 0 4px 0; font-weight: 500;">MedDesk Inventory Management System</p>
         </div>
 
-        <div class="no-print" style="margin-top: 24px; text-align: center;">
-          <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-            Print Stock Receipt
-          </button>
         </div>
       </div>
     </body>
@@ -737,7 +733,9 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
   const printWindow = window.open('', '_blank');
   if (!printWindow) return alert('Please allow popups to print prescriptions.');
 
-  const patientName = patient ? `${patient.last_name || ''}, ${patient.first_name || ''} ${patient.middle_name || ''}`.replace(/\s+/g, ' ').trim() : '____________________';
+  const patientName = patient 
+    ? `${patient.last_name || ''}, ${patient.first_name || ''} ${patient.middle_name || ''}`.replace(/\s+/g, ' ').trim() 
+    : '____________________';
   const patientAge = patient?.date_of_birth ? getAge(patient.date_of_birth) : '-';
   const patientGender = patient?.gender === 'Male' ? 'M' : patient?.gender === 'Female' ? 'F' : (patient?.gender || '-');
   const ageSex = `${patientAge}/${patientGender}`;
@@ -747,10 +745,10 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
     ? new Date(prescription.prescription_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Doctor Details (Fallback to image prescription values if doctor object doesn't supply specific overrides)
+  // Doctor Details (Fallback to default clinic doctor if specific fields missing)
   const doctorHeaderName = doctor?.first_name 
-    ? `${doctor.first_name || ''} ${doctor.last_name || ''}${doctor.specialty ? ', MD' : ''}`.trim().toUpperCase() 
-    : 'GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM';
+    ? `${doctor.first_name || ''} ${doctor.last_name || ''}${doctor.specialty ? ', MD' : ', MD'}`.trim().toUpperCase() 
+    : 'GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM';
   const doctorSigName = doctor?.first_name 
     ? `DR. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim().toUpperCase() 
     : 'DR. GLADDAYS CASUGA-NAPIGKIT';
@@ -769,24 +767,26 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
       const sig = sigParts ? `Sig: ${sigParts}` : '';
 
       return `
-        <div style="margin-bottom: 14px;">
-          ${medName} ${qty ? `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${qty}` : ''}
-          ${sig ? `<br/><span style="margin-left: 20px; font-size: 0.9em;">${sig}</span>` : ''}
+        <div style="margin-bottom: 6px; page-break-inside: avoid;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; font-size: 12px;">
+            <span>${medName}</span>
+            <span style="font-size: 11px; font-weight: 600;">${qty}</span>
+          </div>
+          ${sig ? `<div style="margin-left: 15px; font-size: 11px; font-style: italic; margin-top: 1px; color: #111; line-height: 1.25;">${sig}</div>` : ''}
         </div>
       `;
     }).join('');
   }
 
-  // If there are additional notes or prescription_text (and not automated scanner note)
+  // Additional notes/instructions if present
   if (prescription?.notes && !prescription.notes.includes('Extracted from document')) {
-    rxBodyContent += `<div style="margin-top: 15px; white-space: pre-wrap;">${prescription.notes}</div>`;
+    rxBodyContent += `<div style="margin-top: 10px; font-size: 11px; line-height: 1.3; white-space: pre-wrap; font-style: italic;"><strong>Special Instructions:</strong><br/>${prescription.notes}</div>`;
   } else if (prescription?.prescription_text) {
-    rxBodyContent += `<div style="margin-top: 15px; white-space: pre-wrap;">${prescription.prescription_text}</div>`;
+    rxBodyContent += `<div style="margin-top: 10px; font-size: 11px; line-height: 1.3; white-space: pre-wrap; font-style: italic;">${prescription.prescription_text}</div>`;
   }
 
-  // If rxBodyContent is empty, default placeholder
   if (!rxBodyContent.trim()) {
-    rxBodyContent = '<div style="color: #666; font-style: italic;">No medications listed.</div>';
+    rxBodyContent = '<div style="color: #666; font-style: italic; font-size: 11px;">No medications listed.</div>';
   }
 
   const htmlContent = `
@@ -796,14 +796,14 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
       <title>Prescription - ${patientName}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
-        body { font-family: 'Times New Roman', Times, serif; color: black; padding: 25px; background: white; margin: 0; }
+        body { font-family: 'Times New Roman', Times, serif; color: black; padding: 30px; background: white; margin: 0; }
         
         .doc-header-name { 
           text-align: center; 
           font-family: 'Playfair Display', 'Times New Roman', serif; 
           font-style: italic; 
           font-weight: bold; 
-          font-size: 20px; 
+          font-size: 21px; 
           letter-spacing: 0.5px; 
           margin-bottom: 4px; 
           text-transform: uppercase; 
@@ -814,8 +814,8 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           text-align: center; 
           font-family: 'Times New Roman', Times, serif;
           font-size: 11px; 
-          line-height: 1.35; 
-          margin-bottom: 14px; 
+          line-height: 1.3; 
+          margin-bottom: 12px; 
           color: #000;
         }
 
@@ -825,19 +825,15 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           font-family: 'Times New Roman', Times, serif;
           font-size: 11px; 
           line-height: 1.35; 
-          padding-bottom: 10px; 
-          margin-bottom: 8px; 
-          border-bottom: 1px dashed #555;
+          padding-bottom: 8px; 
+          margin-bottom: 20px; 
+          border-bottom: 3px double black;
           color: #000;
         }
 
-        .affil-col {
-          width: 48%;
-        }
-
         .patient-block {
-          margin-bottom: 12px;
-          padding-bottom: 6px;
+          margin-bottom: 18px;
+          padding-bottom: 10px;
           border-bottom: 1.5px solid #000;
         }
 
@@ -845,32 +841,41 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           width: 100%;
           border-collapse: collapse;
           font-family: 'Times New Roman', Times, serif;
-          font-size: 12.5px;
-          line-height: 1.5;
+          font-size: 14px;
+          line-height: 1.6;
           color: #000;
         }
 
         .patient-table td {
-          padding: 2px 0;
+          padding: 3px 0;
+        }
+
+        .underline-text {
+          font-style: italic;
+          font-weight: bold;
+          border-bottom: 1px solid black;
+          padding: 0 4px;
+          display: inline-block;
         }
 
         .rx-symbol {
-          font-family: 'Playfair Display', 'Dancing Script', Georgia, serif;
+          font-family: 'Playfair Display', Georgia, serif;
           font-style: italic;
           font-weight: bold;
-          font-size: 44px;
+          font-size: 46px;
           color: #000;
           margin-top: 10px;
           margin-bottom: 15px;
+          line-height: 1;
         }
 
         .rx-body {
-          font-family: 'Dancing Script', 'Playfair Display', Georgia, serif;
-          font-style: italic;
-          font-size: 20px;
-          line-height: 1.8;
-          min-height: 320px;
-          padding-left: 10px;
+          font-family: 'Lucida Calligraphy', 'Dancing Script', 'Apple Chancery', cursive, serif;
+          font-size: 12px;
+          line-height: 1.3;
+          min-height: 260px;
+          padding-left: 15px;
+          padding-right: 15px;
           color: #000;
         }
 
@@ -879,15 +884,21 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           text-align: left;
           margin-top: 30px;
           margin-bottom: 15px;
-          font-family: 'Times New Roman', Times, serif;
+          font-family: Arial, Helvetica, sans-serif;
           font-size: 11px;
           line-height: 1.35;
           width: 290px;
           color: #000;
         }
 
+        .sig-line {
+          border-bottom: 1px solid #000;
+          margin-bottom: 8px;
+          width: 100%;
+          height: 30px;
+        }
+
         .doc-sig-name {
-          font-family: Arial, Helvetica, sans-serif;
           font-weight: bold;
           font-size: 11.5px;
           text-transform: uppercase;
@@ -897,13 +908,14 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         .doc-sig-sub {
           font-size: 11px;
           font-weight: 500;
+          margin-bottom: 4px;
         }
 
         .footer-quote {
           clear: both;
           text-align: center;
-          margin-top: 40px;
-          font-family: 'Dancing Script', 'Playfair Display', serif;
+          margin-top: 50px;
+          font-family: 'Playfair Display', serif;
           font-style: italic;
           font-size: 14px;
           color: #000;
@@ -913,15 +925,19 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           text-decoration: underline;
         }
 
+        .clear {
+          clear: both;
+        }
+
         @media print {
-          body { padding: 0; margin: 0; }
-          @page { margin: 1.2cm; size: A4 portrait; }
+          @page { margin: 0; size: A4 portrait; }
+          body { padding: 1.2cm; margin: 0; }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div style="max-width: 720px; margin: 0 auto;">
+      <div style="max-width: 750px; margin: 0 auto;">
         
         <div class="doc-header-name">
           ${doctorHeaderName}
@@ -935,7 +951,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         </div>
 
         <div class="affiliations">
-          <div class="affil-col">
+          <div>
             <strong>Hospital Affiliations:</strong><br/>
             Adventist Medical Center-Valencia<br/>
             Abella Midway Hospital<br/>
@@ -944,7 +960,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
             Medidas Medical Center<br/>
             Esther Hospital
           </div>
-          <div class="affil-col">
+          <div>
             <strong>Clinic Address & Clinic Hours:</strong><br/>
             Adventist Medical Center: M-T-Th-F (1:00 pm to 4:00 pm)<br/>
             Abella Midway Hospital: Wed (1:00 pm to 4:00 pm)
@@ -954,12 +970,12 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         <div class="patient-block">
           <table class="patient-table">
             <tr>
-              <td style="width: 60%;">Name: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>${patientName}</strong></td>
-              <td style="width: 40%;">Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${dateStr}</td>
+              <td style="width: 60%;">Name: &nbsp;<span class="underline-text" style="min-width: 280px;">${patientName}</span></td>
+              <td style="width: 40%;">Date: &nbsp;<span class="underline-text" style="min-width: 140px;">${dateStr}</span></td>
             </tr>
             <tr>
-              <td>Address: &nbsp;&nbsp;&nbsp;${patientAddress}</td>
-              <td>Age/sex: &nbsp;${ageSex}</td>
+              <td>Address: &nbsp;<span class="underline-text" style="min-width: 260px;">${patientAddress}</span></td>
+              <td>Age/Sex: &nbsp;<span class="underline-text" style="min-width: 100px;">${ageSex}</span></td>
             </tr>
           </table>
         </div>
@@ -971,19 +987,21 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         </div>
 
         <div class="signature-block">
+          <div class="sig-line"></div>
           <div class="doc-sig-name">${doctorSigName}</div>
           <div class="doc-sig-sub">${doctorSpecialty}</div>
           <div>Lic #: ${licNo}</div>
           <div>PTR #: ${ptrNo}</div>
           <div>S2 Lic #: ${s2LicNo}</div>
         </div>
+        <div class="clear"></div>
 
         <div class="footer-quote">
           "A merry heart doeth good like a medicine." <span class="quote-ref">Proverbs</span> 17:22
         </div>
 
         <div class="no-print" style="margin-top: 30px; text-align: center;">
-          <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">
+          <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">
             Print Prescription
           </button>
         </div>

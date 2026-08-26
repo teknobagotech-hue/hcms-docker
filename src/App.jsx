@@ -43,9 +43,11 @@ import InventoryCategoriesList from './pages/inventory/InventoryCategoriesList';
 import CategoryForm from './pages/inventory/CategoryForm';
 import InventoryItemsList from './pages/inventory/InventoryItemsList';
 import InventoryItemForm from './pages/inventory/InventoryItemForm';
+import InventoryItemView from './pages/inventory/InventoryItemView';
 
 import SuppliersList from './pages/inventory/SuppliersList';
 import SupplierForm from './pages/inventory/SupplierForm';
+import SupplierView from './pages/inventory/SupplierView';
 import StockReceiptsList from './pages/inventory/StockReceiptsList';
 import StockReceiptForm from './pages/inventory/StockReceiptForm';
 import StockReceiptView from './pages/inventory/StockReceiptView';
@@ -57,10 +59,12 @@ import WithdrawalForm from './pages/pharmacy/WithdrawalForm';
 
 import InsuranceProvidersList from './pages/billing/InsuranceProvidersList';
 import InsuranceProviderForm from './pages/billing/InsuranceProviderForm';
+import InsuranceProviderView from './pages/billing/InsuranceProviderView';
 import PatientInsuranceList from './pages/billing/PatientInsuranceList';
 import PatientInsuranceForm from './pages/billing/PatientInsuranceForm';
 import BillingList from './pages/billing/BillingList';
 import BillingForm from './pages/billing/BillingForm';
+import BillingView from './pages/billing/BillingView';
 
 import './index.css';
 
@@ -452,11 +456,13 @@ function AppRoutes() {
         <Route path="/inventory/items" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemsList /></LayoutWrapper></RoleGuard>} />
         <Route path="/inventory/items/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/inventory/items/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/items/view/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><InventoryItemView /></LayoutWrapper></RoleGuard>} />
 
         {/* Suppliers & Stock Receipts Routes */}
         <Route path="/inventory/suppliers" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SuppliersList /></LayoutWrapper></RoleGuard>} />
         <Route path="/inventory/suppliers/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SupplierForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/inventory/suppliers/edit/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SupplierForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/inventory/suppliers/view/:id" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><SupplierView /></LayoutWrapper></RoleGuard>} />
 
         <Route path="/inventory/receipts" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptsList /></LayoutWrapper></RoleGuard>} />
         <Route path="/inventory/receipts/add" element={<RoleGuard allowedRoles={['admin', 'pharmacist']}><LayoutWrapper><StockReceiptForm /></LayoutWrapper></RoleGuard>} />
@@ -476,6 +482,7 @@ function AppRoutes() {
         <Route path="/billing/insurance" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProvidersList /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/insurance/add" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProviderForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/insurance/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProviderForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/insurance/view/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><InsuranceProviderView /></LayoutWrapper></RoleGuard>} />
 
         <Route path="/billing/patient-insurance" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceList /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/patient-insurance/add" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><PatientInsuranceForm /></LayoutWrapper></RoleGuard>} />
@@ -485,6 +492,7 @@ function AppRoutes() {
         <Route path="/billing/records" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingList /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/records/add" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/records/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
+        <Route path="/billing/records/view/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><BillingView /></LayoutWrapper></RoleGuard>} />
 
       </Routes>
     </Router>
