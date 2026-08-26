@@ -141,21 +141,75 @@ export default function PatientPrint() {
       <style>
         {`
           @media print {
-            body { background: white; margin: 0; padding: 0; font-size: 10pt; }
-            .print-container { padding: 0 !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; }
-            @page { margin: 1cm; size: auto; }
+            body { 
+              background: #fff !important; 
+              margin: 0 !important; 
+              padding: 0 !important; 
+              font-size: 9pt !important; 
+              color: #000 !important; 
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .print-container { 
+              padding: 0 !important; 
+              width: 100% !important; 
+              max-width: 100% !important; 
+              margin: 0 !important; 
+              box-sizing: border-box !important;
+            }
+            @page { 
+              margin: 8mm 10mm; 
+              size: A4 portrait; 
+            }
             .page-break { page-break-before: always; }
             .no-break { page-break-inside: avoid; }
             button { display: none !important; }
-            .print-table-wrapper { overflow: visible !important; width: 100% !important; }
-            .print-table { width: 100% !important; font-size: 8pt !important; table-layout: auto !important; }
-            .print-table th, .print-table td { padding: 3px 5px !important; white-space: nowrap !important; }
+            .print-table-wrapper { 
+              overflow: visible !important; 
+              width: 100% !important; 
+            }
+            .print-table { 
+              width: 100% !important; 
+              font-size: 8pt !important; 
+              table-layout: fixed !important; 
+              border-collapse: collapse !important;
+              margin-bottom: 1rem !important;
+              box-sizing: border-box !important;
+            }
+            .print-table th, .print-table td { 
+              border: 1px solid #94a3b8 !important; 
+              padding: 4px 6px !important; 
+              text-align: left !important; 
+              white-space: normal !important; 
+              word-break: break-word !important; 
+              overflow-wrap: break-word !important; 
+              vertical-align: top !important; 
+            }
+            .print-table th { 
+              background-color: #f1f5f9 !important; 
+              font-weight: bold !important; 
+              color: #0f172a !important; 
+            }
+
+            .print-table-compact {
+              table-layout: auto !important;
+              font-size: 7.5pt !important;
+            }
+            .print-table-compact th, .print-table-compact td {
+              padding: 3px 4px !important;
+              white-space: nowrap !important;
+              text-align: center !important;
+            }
+            .print-table-compact th:first-child, .print-table-compact td:first-child {
+              text-align: left !important;
+            }
           }
+
           .print-header { text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
           .print-title { font-size: 1.25rem; font-weight: bold; margin: 0 0 0.5rem 0; }
           .print-subtitle { font-size: 0.9rem; margin: 0; }
-          .print-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; }
-          .print-table th, .print-table td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+          .print-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; table-layout: fixed; box-sizing: border-box; }
+          .print-table th, .print-table td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; word-break: break-word; overflow-wrap: break-word; vertical-align: top; }
           .print-table th { background-color: #f8f9fa; font-weight: bold; }
           .section-title { font-size: 1.1rem; font-weight: bold; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
           .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; font-size: 0.9rem; }
@@ -230,11 +284,11 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '15%' }}>DATE</th>
-                <th style={{ width: '20%' }}>ATTENDING DOCTOR</th>
+                <th style={{ width: '12%' }}>DATE</th>
+                <th style={{ width: '18%' }}>ATTENDING DOCTOR</th>
                 <th style={{ width: '25%' }}>CHIEF COMPLAINT</th>
                 <th style={{ width: '20%' }}>DIAGNOSIS</th>
-                <th style={{ width: '20%' }}>PLAN / DETAILS</th>
+                <th style={{ width: '25%' }}>PLAN / DETAILS</th>
               </tr>
             </thead>
             <tbody>
@@ -251,9 +305,9 @@ export default function PatientPrint() {
                   <tr key={r.record_id}>
                     <td>{r.record_date ? new Date(r.record_date).toLocaleDateString() : '-'}</td>
                     <td>{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap' }}>{r.chief_complaint || '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap' }}>{r.diagnosis || '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap' }}>{planOrDetails || '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.chief_complaint || '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.diagnosis || '-'}</td>
+                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{planOrDetails || '-'}</td>
                   </tr>
                 );
               })}
@@ -269,9 +323,9 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '22%' }}>DATE & TIME</th>
+                <th style={{ width: '20%' }}>DATE & TIME</th>
                 <th style={{ width: '25%' }}>DOCTOR</th>
-                <th style={{ width: '38%' }}>PURPOSE</th>
+                <th style={{ width: '40%' }}>PURPOSE</th>
                 <th style={{ width: '15%' }}>STATUS</th>
               </tr>
             </thead>
@@ -280,7 +334,7 @@ export default function PatientPrint() {
                 <tr key={appt.appointment_id}>
                   <td>{appt.appointment_date ? new Date(appt.appointment_date).toLocaleString() : '-'}</td>
                   <td>{appt.doctors ? `Dr. ${appt.doctors.first_name} ${appt.doctors.last_name}${appt.doctors.specialty ? ` (${appt.doctors.specialty})` : ''}` : 'Unassigned'}</td>
-                  <td style={{ whiteSpace: 'pre-wrap' }}>{appt.purpose || '-'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{appt.purpose || '-'}</td>
                   <td style={{ textTransform: 'uppercase', fontWeight: 'bold' }}>{appt.status || '-'}</td>
                 </tr>
               ))}
@@ -296,12 +350,12 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th>DATE</th>
-                <th>BP</th>
-                <th>PULSE</th>
-                <th>SPO2</th>
-                <th>TEMP</th>
-                <th>WEIGHT</th>
+                <th style={{ width: '20%' }}>DATE</th>
+                <th style={{ width: '16%' }}>BP</th>
+                <th style={{ width: '16%' }}>PULSE</th>
+                <th style={{ width: '16%' }}>SPO2</th>
+                <th style={{ width: '16%' }}>TEMP</th>
+                <th style={{ width: '16%' }}>WEIGHT</th>
               </tr>
             </thead>
             <tbody>
@@ -325,7 +379,7 @@ export default function PatientPrint() {
         <div className="no-break">
           <h2 className="section-title">LAB FLOW SHEET - COMPLETE BLOOD COUNT</h2>
           <div className="print-table-wrapper" style={{ width: '100%' }}>
-            <table className="print-table">
+            <table className="print-table print-table-compact">
               <thead>
                 <tr>
                   {activeCbcCols.map(col => (
@@ -354,7 +408,7 @@ export default function PatientPrint() {
         <div className="no-break">
           <h2 className="section-title">BLOOD CHEMISTRY</h2>
           <div className="print-table-wrapper" style={{ width: '100%' }}>
-            <table className="print-table">
+            <table className="print-table print-table-compact">
               <thead>
                 <tr>
                   {activeChemCols.map(col => (
@@ -385,8 +439,8 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th>DATE</th>
-                <th>TSH</th>
+                <th style={{ width: '30%' }}>DATE</th>
+                <th style={{ width: '70%' }}>TSH</th>
               </tr>
             </thead>
             <tbody>
@@ -425,7 +479,7 @@ export default function PatientPrint() {
                   <strong>MICROSCOPIC EXAM</strong><br/>
                   Pus Cells: {l.pus_cells || '-'}<br/>
                   RBC: {l.rbc_micro || '-'}<br/>
-                  Epithelial Cells: {l.epithelial_cells || '-'}<br/>
+                  Epithelial Cells: {l.epithelial_cells || '-'}
                   Bacteria: {l.bacteria || '-'}
                 </div>
               </div>
@@ -441,10 +495,10 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '15%' }}>DATE</th>
-                <th style={{ width: '20%' }}>MODALITY</th>
+                <th style={{ width: '12%' }}>DATE</th>
+                <th style={{ width: '18%' }}>MODALITY</th>
                 <th style={{ width: '20%' }}>LOCATION</th>
-                <th style={{ width: '45%' }}>IMPRESSION</th>
+                <th style={{ width: '50%' }}>IMPRESSION</th>
               </tr>
             </thead>
             <tbody>
@@ -453,7 +507,7 @@ export default function PatientPrint() {
                   <td>{img.record_date ? new Date(img.record_date).toLocaleDateString() : '-'}</td>
                   <td>{img.modality || '-'}</td>
                   <td>{img.location || '-'}</td>
-                  <td style={{ whiteSpace: 'pre-wrap' }}>{img.impression || '-'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{img.impression || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -468,10 +522,10 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '20%' }}>ISSUE DATE</th>
-                <th style={{ width: '25%' }}>TYPE</th>
+                <th style={{ width: '15%' }}>ISSUE DATE</th>
+                <th style={{ width: '20%' }}>TYPE</th>
                 <th style={{ width: '30%' }}>PURPOSE</th>
-                <th style={{ width: '25%' }}>DIAGNOSIS / IMPRESSION</th>
+                <th style={{ width: '35%' }}>DIAGNOSIS / IMPRESSION</th>
               </tr>
             </thead>
             <tbody>
@@ -479,8 +533,8 @@ export default function PatientPrint() {
                 <tr key={doc.document_id}>
                   <td>{doc.issue_date ? new Date(doc.issue_date).toLocaleDateString() : '-'}</td>
                   <td>{doc.document_type || '-'}</td>
-                  <td>{doc.purpose || '-'}</td>
-                  <td>{doc.diagnosis_impression || '-'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{doc.purpose || '-'}</td>
+                  <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{doc.diagnosis_impression || '-'}</td>
                 </tr>
               ))}
             </tbody>

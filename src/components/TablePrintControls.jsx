@@ -51,10 +51,10 @@ export default function TablePrintControls({
     const printWindow = window.open('', '_blank');
     
     let tableHtml = `
-      <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">
         <thead>
           <tr>
-            ${columns.map(c => `<th style="border: 1px solid #ccc; padding: 8px; text-align: left; background-color: #f8fafc;">${c.label}</th>`).join('')}
+            ${columns.map(c => `<th style="border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; background-color: #f1f5f9; font-size: 9pt; font-weight: bold; width: ${c.width || 'auto'};">${c.label}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
@@ -62,7 +62,7 @@ export default function TablePrintControls({
             <tr>
               ${columns.map(c => {
                 const val = c.render ? c.render(r) : r[c.key] || '-';
-                return `<td style="border: 1px solid #ccc; padding: 8px;">${val}</td>`;
+                return `<td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 8.5pt; vertical-align: top; word-break: break-word; overflow-wrap: break-word; white-space: normal;">${val}</td>`;
               }).join('')}
             </tr>
           `).join('')}
@@ -77,9 +77,14 @@ export default function TablePrintControls({
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; color: #333; padding: 20px; }
             h1 { color: #1e293b; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+            th, td { word-break: break-word; overflow-wrap: break-word; white-space: normal; }
             @media print {
-              @page { margin: 20px; }
-              button { display: none; }
+              @page { margin: 10mm; size: A4 portrait; }
+              body { padding: 0; margin: 0; }
+              button { display: none !important; }
+              table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
+              th, td { word-break: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }
             }
           </style>
         </head>
