@@ -66,6 +66,8 @@ CREATE TABLE public.doctors (
   schedule text,
   status status_enum DEFAULT 'active'::status_enum,
   license_number text,
+  ptr_number text,
+  s2_license text,
   created_at timestamp without time zone DEFAULT now(),
   updated_at timestamp without time zone DEFAULT now()
 );

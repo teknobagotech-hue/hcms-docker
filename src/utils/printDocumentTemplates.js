@@ -733,4 +733,274 @@ export function printStockReceipt({ receipt, items = [] }) {
   }, 600);
 }
 
+export function printPrescription({ patient, prescription, items = [], doctor = null }) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return alert('Please allow popups to print prescriptions.');
+
+  const patientName = patient ? `${patient.last_name || ''}, ${patient.first_name || ''} ${patient.middle_name || ''}`.replace(/\s+/g, ' ').trim() : '____________________';
+  const patientAge = patient?.date_of_birth ? getAge(patient.date_of_birth) : '-';
+  const patientGender = patient?.gender === 'Male' ? 'M' : patient?.gender === 'Female' ? 'F' : (patient?.gender || '-');
+  const ageSex = `${patientAge}/${patientGender}`;
+  const patientAddress = patient?.address || '__________________________________________________';
+
+  const dateStr = prescription?.prescription_date 
+    ? new Date(prescription.prescription_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Doctor Details (Fallback to image prescription values if doctor object doesn't supply specific overrides)
+  const doctorHeaderName = doctor?.first_name 
+    ? `${doctor.first_name || ''} ${doctor.last_name || ''}${doctor.specialty ? ', MD' : ''}`.trim().toUpperCase() 
+    : 'GLADDAYS CASUGA-NAPIGKIT, MD, FPCP, FPCC, FPSVM';
+  const doctorSigName = doctor?.first_name 
+    ? `DR. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim().toUpperCase() 
+    : 'DR. GLADDAYS CASUGA-NAPIGKIT';
+  const doctorSpecialty = doctor?.specialty || 'Internist-Cardiologist-Vascular Specialist';
+  const licNo = doctor?.license_number || doctor?.lic_no || '0110138';
+  const ptrNo = doctor?.ptr_number || doctor?.ptr_no || '6226871';
+  const s2LicNo = doctor?.s2_license || doctor?.s2_lic || doctor?.s2_license_number || 'S2015621FNP071328-K';
+
+  let rxBodyContent = '';
+
+  if (items && items.length > 0) {
+    rxBodyContent += items.map((item) => {
+      const medName = item.medicines?.medicine_name || item.medicine_name || '';
+      const qty = item.quantity ? `#${item.quantity}` : '';
+      const sigParts = [item.dosage, item.frequency, item.instructions].filter(Boolean).join(' ');
+      const sig = sigParts ? `Sig: ${sigParts}` : '';
+
+      return `
+        <div style="margin-bottom: 14px;">
+          ${medName} ${qty ? `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${qty}` : ''}
+          ${sig ? `<br/><span style="margin-left: 20px; font-size: 0.9em;">${sig}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // If there are additional notes or prescription_text (and not automated scanner note)
+  if (prescription?.notes && !prescription.notes.includes('Extracted from document')) {
+    rxBodyContent += `<div style="margin-top: 15px; white-space: pre-wrap;">${prescription.notes}</div>`;
+  } else if (prescription?.prescription_text) {
+    rxBodyContent += `<div style="margin-top: 15px; white-space: pre-wrap;">${prescription.prescription_text}</div>`;
+  }
+
+  // If rxBodyContent is empty, default placeholder
+  if (!rxBodyContent.trim()) {
+    rxBodyContent = '<div style="color: #666; font-style: italic;">No medications listed.</div>';
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Prescription - ${patientName}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+        body { font-family: 'Times New Roman', Times, serif; color: black; padding: 25px; background: white; margin: 0; }
+        
+        .doc-header-name { 
+          text-align: center; 
+          font-family: 'Playfair Display', 'Times New Roman', serif; 
+          font-style: italic; 
+          font-weight: bold; 
+          font-size: 20px; 
+          letter-spacing: 0.5px; 
+          margin-bottom: 4px; 
+          text-transform: uppercase; 
+          color: #000;
+        }
+        
+        .doc-specialty { 
+          text-align: center; 
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 11px; 
+          line-height: 1.35; 
+          margin-bottom: 14px; 
+          color: #000;
+        }
+
+        .affiliations { 
+          display: flex; 
+          justify-content: space-between; 
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 11px; 
+          line-height: 1.35; 
+          padding-bottom: 10px; 
+          margin-bottom: 8px; 
+          border-bottom: 1px dashed #555;
+          color: #000;
+        }
+
+        .affil-col {
+          width: 48%;
+        }
+
+        .patient-block {
+          margin-bottom: 12px;
+          padding-bottom: 6px;
+          border-bottom: 1.5px solid #000;
+        }
+
+        .patient-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 12.5px;
+          line-height: 1.5;
+          color: #000;
+        }
+
+        .patient-table td {
+          padding: 2px 0;
+        }
+
+        .rx-symbol {
+          font-family: 'Playfair Display', 'Dancing Script', Georgia, serif;
+          font-style: italic;
+          font-weight: bold;
+          font-size: 44px;
+          color: #000;
+          margin-top: 10px;
+          margin-bottom: 15px;
+        }
+
+        .rx-body {
+          font-family: 'Dancing Script', 'Playfair Display', Georgia, serif;
+          font-style: italic;
+          font-size: 20px;
+          line-height: 1.8;
+          min-height: 320px;
+          padding-left: 10px;
+          color: #000;
+        }
+
+        .signature-block {
+          float: right;
+          text-align: left;
+          margin-top: 30px;
+          margin-bottom: 15px;
+          font-family: 'Times New Roman', Times, serif;
+          font-size: 11px;
+          line-height: 1.35;
+          width: 290px;
+          color: #000;
+        }
+
+        .doc-sig-name {
+          font-family: Arial, Helvetica, sans-serif;
+          font-weight: bold;
+          font-size: 11.5px;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+
+        .doc-sig-sub {
+          font-size: 11px;
+          font-weight: 500;
+        }
+
+        .footer-quote {
+          clear: both;
+          text-align: center;
+          margin-top: 40px;
+          font-family: 'Dancing Script', 'Playfair Display', serif;
+          font-style: italic;
+          font-size: 14px;
+          color: #000;
+        }
+
+        .quote-ref {
+          text-decoration: underline;
+        }
+
+        @media print {
+          body { padding: 0; margin: 0; }
+          @page { margin: 1.2cm; size: A4 portrait; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div style="max-width: 720px; margin: 0 auto;">
+        
+        <div class="doc-header-name">
+          ${doctorHeaderName}
+        </div>
+        
+        <div class="doc-specialty">
+          <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
+          Fellow, Philippine College of Physician<br/>
+          Fellow, Philippine College of Cardiology<br/>
+          Fellow, Philippine Society of Vascular Medicine
+        </div>
+
+        <div class="affiliations">
+          <div class="affil-col">
+            <strong>Hospital Affiliations:</strong><br/>
+            Adventist Medical Center-Valencia<br/>
+            Abella Midway Hospital<br/>
+            Lavina General Hospital<br/>
+            Valencia Polymedic General Hospital<br/>
+            Medidas Medical Center<br/>
+            Esther Hospital
+          </div>
+          <div class="affil-col">
+            <strong>Clinic Address & Clinic Hours:</strong><br/>
+            Adventist Medical Center: M-T-Th-F (1:00 pm to 4:00 pm)<br/>
+            Abella Midway Hospital: Wed (1:00 pm to 4:00 pm)
+          </div>
+        </div>
+
+        <div class="patient-block">
+          <table class="patient-table">
+            <tr>
+              <td style="width: 60%;">Name: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>${patientName}</strong></td>
+              <td style="width: 40%;">Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${dateStr}</td>
+            </tr>
+            <tr>
+              <td>Address: &nbsp;&nbsp;&nbsp;${patientAddress}</td>
+              <td>Age/sex: &nbsp;${ageSex}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="rx-symbol">Rx</div>
+
+        <div class="rx-body">
+          ${rxBodyContent}
+        </div>
+
+        <div class="signature-block">
+          <div class="doc-sig-name">${doctorSigName}</div>
+          <div class="doc-sig-sub">${doctorSpecialty}</div>
+          <div>Lic #: ${licNo}</div>
+          <div>PTR #: ${ptrNo}</div>
+          <div>S2 Lic #: ${s2LicNo}</div>
+        </div>
+
+        <div class="footer-quote">
+          "A merry heart doeth good like a medicine." <span class="quote-ref">Proverbs</span> 17:22
+        </div>
+
+        <div class="no-print" style="margin-top: 30px; text-align: center;">
+          <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;">
+            Print Prescription
+          </button>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
+  }, 600);
+}
+
+
 

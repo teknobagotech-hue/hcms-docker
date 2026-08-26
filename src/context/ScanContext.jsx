@@ -53,6 +53,7 @@ const initialFormData = {
     smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: ''
   },
   medicalRecord: { chiefComplaint: '', diagnosis: '', visitDate: '' },
+  consultations: [],
   prescriptions: [],
   imagingReports: {
     ultrasoundReports: [],
@@ -159,9 +160,17 @@ export function ScanProvider({ children }) {
 
       await new Promise(r => setTimeout(r, 300));
       
+      const consultationsList = extractedData.consultations || [];
+      const latestConsult = consultationsList.length > 0 ? consultationsList[0] : null;
+
       setFormData({
         patient: { ...initialFormData.patient, ...extractedData.patient },
-        medicalRecord: { ...initialFormData.medicalRecord, ...extractedData.medicalRecord },
+        medicalRecord: {
+          chiefComplaint: extractedData.medicalRecord?.chiefComplaint || latestConsult?.chiefComplaint || '',
+          diagnosis: extractedData.medicalRecord?.diagnosis || latestConsult?.diagnosis || '',
+          visitDate: extractedData.medicalRecord?.visitDate || latestConsult?.visitDate || ''
+        },
+        consultations: consultationsList,
         prescriptions: extractedData.prescriptions || [],
         imagingReports: {
           ultrasoundReports: extractedData.imagingReports?.ultrasoundReports || [],
@@ -234,6 +243,28 @@ export function ScanProvider({ children }) {
     setFormData(prev => ({ ...prev, medicalRecord: { ...prev.medicalRecord, [e.target.name]: e.target.value } }));
   };
 
+  const handleConsultationChange = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.consultations];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, consultations: updated };
+    });
+  };
+
+  const addConsultation = () => {
+    setFormData(prev => ({
+      ...prev,
+      consultations: [...prev.consultations, { visitDate: '', chiefComplaint: '', diagnosis: '', plan: '' }]
+    }));
+  };
+
+  const removeConsultation = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      consultations: prev.consultations.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async (forceSave = false) => {
     if (!formData.patient.firstName || !formData.patient.lastName) {
       toast.error('Patient first name and last name are required');
@@ -259,16 +290,19 @@ export function ScanProvider({ children }) {
         let isDuplicate = false;
         let dupDetail = '';
 
-        if (formData.medicalRecord.chiefComplaint || formData.medicalRecord.diagnosis) {
+        const checkDiag = formData.medicalRecord.diagnosis || (formData.consultations.length > 0 ? formData.consultations[0].diagnosis : '');
+        const checkChief = formData.medicalRecord.chiefComplaint || (formData.consultations.length > 0 ? formData.consultations[0].chiefComplaint : '');
+
+        if (checkChief || checkDiag) {
           let query = supabase
             .from('medical_records')
             .select('record_id, diagnosis, chief_complaint')
             .eq('patient_id', patientId);
 
-          if (formData.medicalRecord.diagnosis) {
-            query = query.ilike('diagnosis', `%${formData.medicalRecord.diagnosis.trim()}%`);
-          } else if (formData.medicalRecord.chiefComplaint) {
-            query = query.ilike('chief_complaint', `%${formData.medicalRecord.chiefComplaint.trim()}%`);
+          if (checkDiag) {
+            query = query.ilike('diagnosis', `%${checkDiag.trim()}%`);
+          } else if (checkChief) {
+            query = query.ilike('chief_complaint', `%${checkChief.trim()}%`);
           }
 
           const { data: existingRecs } = await query;
@@ -340,16 +374,36 @@ export function ScanProvider({ children }) {
         patientId = newPatient.patient_id;
       }
 
-      // 2. Insert Medical Record
-      if (formData.medicalRecord.chiefComplaint || formData.medicalRecord.diagnosis) {
+      // 2. Insert Medical Records / Consultations
+      const recordsToInsert = [];
+
+      if (formData.consultations && formData.consultations.length > 0) {
+        formData.consultations.forEach(c => {
+          if (c.chiefComplaint || c.diagnosis || c.visitDate || c.plan) {
+            recordsToInsert.push({
+              patient_id: patientId,
+              chief_complaint: c.chiefComplaint || '',
+              diagnosis: c.diagnosis || '',
+              plan: c.plan || '',
+              assessment: c.diagnosis || '',
+              subjective: c.chiefComplaint || '',
+              record_date: parseDateToISO(c.visitDate) || new Date().toISOString()
+            });
+          }
+        });
+      } else if (formData.medicalRecord.chiefComplaint || formData.medicalRecord.diagnosis) {
+        recordsToInsert.push({
+          patient_id: patientId,
+          chief_complaint: formData.medicalRecord.chiefComplaint || '',
+          diagnosis: formData.medicalRecord.diagnosis || '',
+          record_date: parseDateToISO(formData.medicalRecord.visitDate) || new Date().toISOString()
+        });
+      }
+
+      if (recordsToInsert.length > 0) {
         const { error: medRecError } = await supabase
           .from('medical_records')
-          .insert({
-            patient_id: patientId,
-            chief_complaint: formData.medicalRecord.chiefComplaint,
-            diagnosis: formData.medicalRecord.diagnosis,
-            record_date: parseDateToISO(formData.medicalRecord.visitDate) || new Date().toISOString()
-          });
+          .insert(recordsToInsert);
         if (medRecError) throw medRecError;
       }
 
@@ -584,6 +638,9 @@ export function ScanProvider({ children }) {
       resetScan,
       handlePatientChange,
       handleMedicalRecordChange,
+      handleConsultationChange,
+      addConsultation,
+      removeConsultation,
       handleSave
     }}>
       {children}

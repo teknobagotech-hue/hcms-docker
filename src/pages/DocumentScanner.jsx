@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useScan } from '../context/ScanContext';
-import { Upload, FileText, CheckCircle, Save, Loader2, RefreshCw, UserCircle2, Pill, Activity, History, Scan, Clock, Sparkles } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Save, Loader2, RefreshCw, UserCircle2, Pill, Activity, History, Scan, Clock, Sparkles, Plus, Trash2 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -26,6 +26,9 @@ export default function DocumentScanner() {
     resetScan,
     handlePatientChange,
     handleMedicalRecordChange,
+    handleConsultationChange,
+    addConsultation,
+    removeConsultation,
     handleSave
   } = useScan();
 
@@ -237,18 +240,18 @@ export default function DocumentScanner() {
                 </div>
 
                 <div className="glass-card">
-                  <div className="card-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                  <div className="card-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 className="card-title" style={{ fontSize: '1.125rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <FileText size={20} /> Medical Record
+                      <FileText size={20} /> Latest Clinical Encounter / Medical Record
                     </h3>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                     <div className="form-group">
-                      <label className="form-label">Chief Complaint</label>
+                      <label className="form-label">Chief Complaint (S-O)</label>
                       <textarea className="form-control" rows="3" name="chiefComplaint" value={formData.medicalRecord.chiefComplaint || ''} onChange={handleMedicalRecordChange}></textarea>
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Diagnosis</label>
+                      <label className="form-label">Diagnosis (A)</label>
                       <input type="text" className="form-control" name="diagnosis" value={formData.medicalRecord.diagnosis || ''} onChange={handleMedicalRecordChange} />
                     </div>
                     <div className="form-group">
@@ -256,6 +259,97 @@ export default function DocumentScanner() {
                       <input type="date" className="form-control" name="visitDate" value={formData.medicalRecord.visitDate || ''} onChange={handleMedicalRecordChange} />
                     </div>
                   </div>
+                </div>
+
+                <div className="glass-card">
+                  <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 className="card-title" style={{ fontSize: '1.125rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <FileText size={20} /> Consultations Extracted ({formData.consultations.length})
+                    </h3>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={addConsultation}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}
+                    >
+                      <Plus size={16} /> Add Consultation
+                    </button>
+                  </div>
+                  {formData.consultations.length === 0 ? (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-gray)', fontSize: '0.9rem' }}>
+                      No consultations extracted. Click "Add Consultation" to add one manually.
+                    </div>
+                  ) : (
+                    <div className="table-container" style={{ overflowX: 'auto' }}>
+                      <table className="premium-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '130px' }}>Date</th>
+                            <th style={{ width: '35%' }}>Subjective & Objective (S-O)</th>
+                            <th style={{ width: '35%' }}>Assessment / Diagnosis (A)</th>
+                            <th>Plan / Recommendations (P)</th>
+                            <th style={{ width: '60px' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.consultations.map((c, idx) => (
+                            <tr key={idx}>
+                              <td>
+                                <input 
+                                  type="text" 
+                                  className="form-control" 
+                                  value={c.visitDate || ''} 
+                                  onChange={(e) => handleConsultationChange(idx, 'visitDate', e.target.value)} 
+                                  placeholder="YYYY-MM-DD"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.875rem' }}
+                                />
+                              </td>
+                              <td>
+                                <textarea 
+                                  className="form-control" 
+                                  rows="2" 
+                                  value={c.chiefComplaint || ''} 
+                                  onChange={(e) => handleConsultationChange(idx, 'chiefComplaint', e.target.value)} 
+                                  placeholder="Subjective / Objective findings"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.875rem', resize: 'vertical' }}
+                                />
+                              </td>
+                              <td>
+                                <textarea 
+                                  className="form-control" 
+                                  rows="2" 
+                                  value={c.diagnosis || ''} 
+                                  onChange={(e) => handleConsultationChange(idx, 'diagnosis', e.target.value)} 
+                                  placeholder="Assessment / Diagnosis"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.875rem', resize: 'vertical' }}
+                                />
+                              </td>
+                              <td>
+                                <textarea 
+                                  className="form-control" 
+                                  rows="2" 
+                                  value={c.plan || ''} 
+                                  onChange={(e) => handleConsultationChange(idx, 'plan', e.target.value)} 
+                                  placeholder="Plan / Recommendations"
+                                  style={{ padding: '0.4rem 0.6rem', fontSize: '0.875rem', resize: 'vertical' }}
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button 
+                                  type="button" 
+                                  className="icon-btn delete" 
+                                  onClick={() => removeConsultation(idx)}
+                                  title="Remove Consultation"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
 
                 {formData.prescriptions.length > 0 && (

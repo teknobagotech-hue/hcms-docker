@@ -21,6 +21,8 @@ export default function DoctorForm() {
     department_id: '',
     schedule: '',
     license_number: '',
+    ptr_number: '',
+    s2_license: '',
     status: 'active'
   });
   
@@ -66,6 +68,8 @@ export default function DoctorForm() {
         department_id: data.department_id || '',
         schedule: data.schedule || '',
         license_number: data.license_number || '',
+        ptr_number: data.ptr_number || '',
+        s2_license: data.s2_license || '',
         status: data.status
       });
     }
@@ -160,8 +164,18 @@ export default function DoctorForm() {
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">License Number</label>
-              <input type="text" name="license_number" className="form-input" style={{ paddingLeft: '1rem' }} value={formData.license_number} onChange={handleChange} />
+              <label className="form-label">Lic # (PRC License Number)</label>
+              <input type="text" name="license_number" className="form-input" style={{ paddingLeft: '1rem' }} placeholder="e.g. 0110138" value={formData.license_number} onChange={handleChange} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">PTR # (PTR Number)</label>
+              <input type="text" name="ptr_number" className="form-input" style={{ paddingLeft: '1rem' }} placeholder="e.g. 6226871" value={formData.ptr_number} onChange={handleChange} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">S2 Lic # (S2 License Number)</label>
+              <input type="text" name="s2_license" className="form-input" style={{ paddingLeft: '1rem' }} placeholder="e.g. S2015621FNP071328-K" value={formData.s2_license} onChange={handleChange} />
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>

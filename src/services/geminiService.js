@@ -48,6 +48,18 @@ export const parseDocumentData = async (fileBuffer) => {
             visitDate: { type: SchemaType.STRING, description: "YYYY-MM-DD format if possible" }
           }
         },
+        consultations: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              visitDate: { type: SchemaType.STRING, description: "YYYY-MM-DD format if possible" },
+              chiefComplaint: { type: SchemaType.STRING, description: "Subjective & Objective (S-O) findings or chief complaint" },
+              diagnosis: { type: SchemaType.STRING, description: "Assessment (A) or Diagnosis" },
+              plan: { type: SchemaType.STRING, description: "Plan (P), Treatment, or Recommendations" }
+            }
+          }
+        },
         prescriptions: {
           type: SchemaType.ARRAY,
           items: {
@@ -242,7 +254,13 @@ export const parseDocumentData = async (fileBuffer) => {
          - Separate medicationName (e.g. "Valsartan + Sacubutril (Sanare)", "Cilnidipine (Cildine)") from dosage (e.g. "200mg/tab", "20 mg/tab").
          - Extract frequency (e.g. "2 x a day", "once a day 6pm"), duration (e.g. "1 day"), and instructions if present.
       3. Medical Records & Consultations:
-         - Extract latest consultation chief complaint (S-O) and diagnosis (A) along with visitDate.
+         - Under the "CONSULTATIONS" section (or throughout the clinical encounters), extract ALL listed consultation encounters into the "consultations" array.
+         - For each consultation encounter, extract:
+           - visitDate (YYYY-MM-DD format if possible)
+           - chiefComplaint: Subjective & Objective (S-O) notes, vital signs if included, or chief complaint
+           - diagnosis: Assessment / Diagnosis (A)
+           - plan: Plan / Treatment / Medications / Recommendations (P)
+         - Also populate "medicalRecord" with the details of the most recent consultation encounter.
       4. Lab Flow Sheets & Vital Signs:
          - Extract all historical records for Vital Signs, CBC, Blood Chemistry, Serology, Urinalysis, and Imaging/X-Ray reports.
          - For Lab Flow Sheets formatted as matrices/tables with dates as column headers (e.g., 07/14/2025, 07/22/2025...) and lab tests as rows (e.g., Creatinine, Sodium, Potassium, SGPT/ALT, HbA1c, Pro-BNP, etc.), create a separate object per DATE column in the chemistry or cbc array with all test values corresponding to that specific date.
@@ -279,6 +297,7 @@ const parseTextFallback = (text) => {
   const data = {
     patient: { firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '', occupation: '', knownAllergies: '', pastMedicalHistory: '', surgicalHistory: '', smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: '' },
     medicalRecord: { chiefComplaint: '', diagnosis: '', visitDate: '' },
+    consultations: [],
     prescriptions: [],
     imagingReports: { ultrasoundReports: [], arterialDuplexScan: [], venousDuplexScan: [], xrayReports: [] },
     vitalSigns: [],
@@ -321,6 +340,40 @@ const parseTextFallback = (text) => {
   // Medical History / Diagnosis
   const diagMatch = text.match(/MEDICAL\s*DIAGNOSIS:\s*([^\r\n]+)/i);
   if (diagMatch) data.patient.pastMedicalHistory = diagMatch[1].trim();
+
+  // Consultations section parsing
+  const consultSectionMatch = text.match(/CONSULTATIONS\s*([\s\S]*?)(?:GLADDAYS|MEDICATIONS|PREVIOUS|SURGICAL|ALLERGIES|LMP|LAB FLOW|BLOOD CHEMISTRY|X-RAY|ULTRASOUND|ARTERIAL|VENOUS|SEROLOGY|CLINICAL MICROSCOPY|Medical Certificate|Referral Letter|$)/i);
+  if (consultSectionMatch) {
+    const rawConsultText = consultSectionMatch[1];
+    const dateRegex = /(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{1,2}[,\-\s]+\d{2,4})|(?:\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi;
+    const matches = [...rawConsultText.matchAll(dateRegex)];
+    if (matches.length > 0) {
+      for (let i = 0; i < matches.length; i++) {
+        const dateStr = matches[i][0].trim();
+        const startIdx = matches[i].index + matches[i][0].length;
+        const endIdx = i + 1 < matches.length ? matches[i + 1].index : rawConsultText.length;
+        const chunk = rawConsultText.slice(startIdx, endIdx).trim();
+
+        const lines = chunk.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+        if (lines.length > 0) {
+          const chief = lines.slice(0, Math.max(1, Math.ceil(lines.length / 2))).join(' ');
+          const diag = lines.slice(Math.ceil(lines.length / 2)).join(' ');
+          data.consultations.push({
+            visitDate: dateStr,
+            chiefComplaint: chief,
+            diagnosis: diag,
+            plan: ''
+          });
+        }
+      }
+    }
+  }
+
+  if (data.consultations.length > 0) {
+    data.medicalRecord.visitDate = data.consultations[0].visitDate;
+    data.medicalRecord.chiefComplaint = data.consultations[0].chiefComplaint;
+    data.medicalRecord.diagnosis = data.consultations[0].diagnosis;
+  }
 
   // Prescriptions
   const medSectionMatch = text.match(/MEDICATIONS:\s*([\s\S]*?)(?:PREVIOUS|SURGICAL|ALLERGIES|LMP|CONSULTATIONS|LAB FLOW|$)/i);

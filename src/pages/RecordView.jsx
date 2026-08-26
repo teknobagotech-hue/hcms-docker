@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DocumentPrintModal from '../components/DocumentPrintModal';
 
@@ -106,7 +106,7 @@ export default function RecordView() {
     ([key]) => key !== 'patient_id' && !key.endsWith('_id')
   );
 
-  const fullWidthKeys = ['chief_complaint', 'diagnosis', 'purpose', 'notes', 'impression', 'diagnosis_impression', 'findings', 'remarks', 'prescription_text', 'medical_history', 'allergies', 'doctors'];
+  const fullWidthKeys = ['chief_complaint', 'diagnosis', 'purpose', 'notes', 'impression', 'diagnosis_impression', 'findings', 'remarks', 'prescription_text', 'medical_history', 'allergies', 'doctors', 'file_url'];
 
   return (
     <div className="dashboard-scroll-area">
@@ -153,6 +153,8 @@ export default function RecordView() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
           {displayData.map(([key, value]) => {
             const isFullWidth = fullWidthKeys.includes(key) || (typeof value === 'string' && value.length > 80);
+            const isFileUrl = key === 'file_url';
+
             return (
               <div key={key} style={{ 
                 gridColumn: isFullWidth ? '1 / -1' : 'auto',
@@ -165,9 +167,37 @@ export default function RecordView() {
                 <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
                   {formatKey(key)}
                 </div>
-                <div style={{ color: '#0F172A', fontSize: '1.05rem', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontWeight: 500 }}>
-                  {key === 'document_type' && value === 'AI Scanner Result' ? 'Scanner Result' : (key === 'diagnosis_impression' && value === 'Document auto-parsed via Gemini AI' ? 'Document auto-parsed' : renderValue(value))}
-                </div>
+
+                {isFileUrl && value ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <a 
+                        href={value} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-primary"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                      >
+                        <ExternalLink size={16} /> Open Attached File
+                      </a>
+                    </div>
+                    {/* Render Image preview if URL looks like an image or Firebase storage object */}
+                    {(String(value).match(/\.(jpeg|jpg|png|gif|webp)/i) || String(value).includes('firebasestorage.googleapis.com')) && (
+                      <div style={{ marginTop: '0.5rem', maxWidth: '450px', maxHeight: '350px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0.5rem' }}>
+                        <img 
+                          src={value} 
+                          alt="Imaging Preview" 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '320px', borderRadius: '0.25rem' }} 
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ color: '#0F172A', fontSize: '1.05rem', whiteSpace: 'pre-wrap', lineHeight: '1.6', fontWeight: 500 }}>
+                    {key === 'document_type' && value === 'AI Scanner Result' ? 'Scanner Result' : (key === 'diagnosis_impression' && value === 'Document auto-parsed via Gemini AI' ? 'Document auto-parsed' : renderValue(value))}
+                  </div>
+                )}
               </div>
             );
           })}

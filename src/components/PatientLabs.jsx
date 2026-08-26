@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, FileText, FlaskConical, Stethoscope, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, FileText, FlaskConical, Stethoscope, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
@@ -94,7 +94,7 @@ export default function PatientLabs({ patientId }) {
       case 'chem': return 31;
       case 'serology': return 3;
       case 'ua': return 12;
-      case 'imaging': return 5;
+      case 'imaging': return 6;
       default: return 7;
     }
   };
@@ -186,6 +186,7 @@ export default function PatientLabs({ patientId }) {
             <th>Modality</th>
             <th>Location</th>
             <th>Impression</th>
+            <th>Attachment</th>
             <th>Actions</th>
           </tr>
         );
@@ -267,7 +268,8 @@ export default function PatientLabs({ patientId }) {
           { label: 'Date', key: 'record_date' },
           { label: 'Modality', key: 'modality' },
           { label: 'Location', key: 'location' },
-          { label: 'Impression', key: 'impression' }
+          { label: 'Impression', key: 'impression' },
+          { label: 'File URL', key: 'file_url' }
         ];
       default:
         return [];
@@ -360,6 +362,20 @@ export default function PatientLabs({ patientId }) {
               <div style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {rec.impression}
               </div>
+            </td>
+            <td>
+              {rec.file_url ? (
+                <a 
+                  href={rec.file_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.25rem 0.65rem', backgroundColor: '#e0f2fe', color: '#0284c7', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 600, textDecoration: 'none' }}
+                >
+                  <ExternalLink size={12} /> View File
+                </a>
+              ) : (
+                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>None</span>
+              )}
             </td>
           </>
         );

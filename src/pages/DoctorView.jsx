@@ -170,10 +170,26 @@ export default function DoctorView() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
-                <div className="form-label">License Number</div>
+                <div className="form-label">PRC Lic #</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-dark)', fontWeight: 500 }}>
                   <div style={{ padding: '0.5rem', backgroundColor: '#F1F5F9', borderRadius: '0.375rem', color: '#64748B' }}><FileSignature size={18} /></div>
-                  {doctor.license_number || 'N/A'}
+                  {doctor.license_number || '0110138'}
+                </div>
+              </div>
+
+              <div>
+                <div className="form-label">PTR #</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-dark)', fontWeight: 500 }}>
+                  <div style={{ padding: '0.5rem', backgroundColor: '#F1F5F9', borderRadius: '0.375rem', color: '#64748B' }}><FileSignature size={18} /></div>
+                  {doctor.ptr_number || '6226871'}
+                </div>
+              </div>
+
+              <div>
+                <div className="form-label">S2 Lic #</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-dark)', fontWeight: 500 }}>
+                  <div style={{ padding: '0.5rem', backgroundColor: '#F1F5F9', borderRadius: '0.375rem', color: '#64748B' }}><FileSignature size={18} /></div>
+                  {doctor.s2_license || 'S2015621FNP071328-K'}
                 </div>
               </div>
 

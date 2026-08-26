@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
 import { Search, Edit, Trash2, Plus, FileSignature, Eye, Printer, Archive } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { printPrescription } from '../../utils/printDocumentTemplates';
 import '../../index.css';
 
 export default function PrescriptionsList() {
@@ -90,7 +91,7 @@ export default function PrescriptionsList() {
   const handlePrintRx = async (prescription) => {
     const { data: patient } = await supabase
       .from('patients')
-      .select('first_name, last_name, address, date_of_birth, gender')
+      .select('*')
       .eq('patient_id', prescription.patient_id)
       .single();
 
@@ -99,122 +100,14 @@ export default function PrescriptionsList() {
       return;
     }
 
-    const age = patient.date_of_birth ? Math.floor((new Date() - new Date(patient.date_of_birth).getTime()) / 3.15576e+10) : '-';
-    const gender = patient.gender === 'Male' ? 'M' : patient.gender === 'Female' ? 'F' : '-';
-    
     const { data: items } = await supabase
       .from('prescription_items')
       .select('*, medicines(medicine_name)')
       .eq('prescription_id', prescription.prescription_id);
 
-    let itemsHtml = (prescription.notes && !prescription.notes.includes('Extracted from document')) ? `<div style="font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 20px;">Notes: ${prescription.notes}</div>` : '';
-    
-    if (items && items.length > 0) {
-      itemsHtml += items.map((item, i) => {
-        const medName = item.medicines ? item.medicines.medicine_name : '';
-        const sig = `Sig: ${item.dosage || ''} ${item.frequency || ''} ${item.instructions || ''}`.trim();
-        return `<div style="margin-bottom: 10px;">${i + 1}. ${medName} &nbsp;&nbsp;&nbsp;&nbsp; #${item.quantity || ''}<br/><span style="margin-left: 20px;">${sig}</span></div>`;
-      }).join('');
-    }
+    const doctor = prescription.doctors || null;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Please allow popups to print the prescription');
-      return;
-    }
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Print Prescription</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap');
-          body { font-family: 'Times New Roman', Times, serif; color: black; padding: 20px; }
-          .cursive-text { font-family: 'Dancing Script', cursive; }
-          .header-right { text-align: right; font-size: 11px; margin-bottom: 20px; font-weight: bold; font-style: italic; }
-          .header-center { text-align: center; font-size: 12px; margin-bottom: 10px; font-style: italic; }
-          .doc-name { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 10px; font-style: italic; letter-spacing: 1px; }
-          .doc-specialty { text-align: center; font-size: 11px; margin-bottom: 15px; }
-          .affiliations { display: flex; justify-content: space-between; font-size: 11px; border-bottom: 1px dashed black; padding-bottom: 10px; margin-bottom: 10px; line-height: 1.4; }
-          .patient-info { width: 100%; font-size: 12px; margin-bottom: 20px; border-bottom: 1px solid black; padding-bottom: 10px; border-top: 1px solid black; padding-top: 10px; border-style: double; border-width: 3px 0; }
-          .patient-info td { padding: 2px; }
-          .rx-symbol { font-size: 44px; font-weight: bold; margin-bottom: 20px; color: #1e3a8a; }
-          .rx-items { margin-left: 30px; font-size: 20px; min-height: 350px; white-space: pre-wrap; line-height: 1.6; }
-          .footer { text-align: right; margin-top: 50px; font-size: 12px; font-style: italic; line-height: 1.4; }
-        </style>
-      </head>
-      <body>
-        <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
-          <div class="header-right">
-              PTR #: 6226871<br/>
-              S2 Lic #
-          </div>
-          <div class="header-center">
-              S2015621PNP071328-K<br/><br/>
-              "A merry heart doeth good like a medicine." Proverbs 17:22
-          </div>
-          <div class="doc-name cursive-text">
-              GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM
-          </div>
-          <div class="doc-specialty">
-              <strong>Internal Medicine, Adult Cardiology, Vascular Medicine</strong><br/>
-              Fellow, Philippine College of Physician<br/>
-              Fellow, Philippine College of Cardiology<br/>
-              Fellow, Philippine Society of Vascular Medicine
-          </div>
-          
-          <div class="affiliations">
-            <div>
-              <strong>Hospital Affiliations:</strong><br/>
-              Adventist Medical Center-Valencia<br/>
-              Abella Midway Hospital<br/>
-              Lavina General Hospital<br/>
-              Valencia Polymedic General Hospital<br/>
-              Medidas Medical Center<br/>
-              Esther Hospital
-            </div>
-            <div>
-              <strong>Clinic Address & Clinic Hours:</strong><br/>
-              Adventist Medical Center: M-T-Th-F (1:00 pm to 4:00 pm)<br/>
-              Abella Midway Hospital: Wed (1:00 pm to 4:00 pm)
-            </div>
-          </div>
-          
-          <table class="patient-info">
-            <tr>
-              <td style="width: 60%;">Name: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>${patient.last_name}, ${patient.first_name}</strong></td>
-              <td style="width: 40%;">Date: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
-            </tr>
-            <tr>
-              <td>Address: &nbsp;&nbsp;&nbsp;${patient.address || '-'}</td>
-              <td>Age/Sex: &nbsp;${age}/${gender}</td>
-            </tr>
-          </table>
-
-          <div class="rx-symbol cursive-text">Rx</div>
-          
-          <div class="rx-items cursive-text">${itemsHtml}</div>
-          
-          <div class="footer">
-              <strong style="font-family: Arial, sans-serif; font-style: normal;">DR. GLADDAYS CASUGA-NAPIGKIT</strong><br/>
-              Internist-Cardiologist-<br/>
-              Vascular Specialist<br/>
-              Lic #: 0110138
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.open();
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.focus();
-    
-    setTimeout(() => {
-      printWindow.print();
-    }, 800);
+    printPrescription({ patient, prescription, items, doctor });
   };
 
   const totalPages = Math.ceil(totalCount / limit);
