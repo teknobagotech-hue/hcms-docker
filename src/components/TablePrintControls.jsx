@@ -78,13 +78,15 @@ export default function TablePrintControls({
             body { font-family: system-ui, -apple-system, sans-serif; color: #333; padding: 20px; }
             h1 { color: #1e293b; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
-            th, td { word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+            th { word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+            td { word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
             @media print {
               @page { margin: 10mm; size: A4 portrait; }
               body { padding: 0; margin: 0; }
               button { display: none !important; }
               table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
-              th, td { word-break: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }
+              th { word-break: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }
+              td { word-break: break-word !important; overflow-wrap: break-word !important; white-space: pre-wrap !important; }
             }
           </style>
         </head>
