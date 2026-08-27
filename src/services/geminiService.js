@@ -36,7 +36,9 @@ export const parseDocumentData = async (fileBuffer) => {
             smokingHistory: { type: SchemaType.STRING },
             alcoholicIntake: { type: SchemaType.STRING },
             emergencyContactName: { type: SchemaType.STRING },
-            guardianName: { type: SchemaType.STRING }
+            guardianName: { type: SchemaType.STRING },
+            medications: { type: SchemaType.STRING },
+            previousHospitalization: { type: SchemaType.STRING }
           },
           required: ["firstName", "lastName"]
         },
@@ -248,7 +250,7 @@ export const parseDocumentData = async (fileBuffer) => {
          - Separate name into firstName and lastName (e.g., "DICHOSO, WILMA C." -> lastName: "DICHOSO", firstName: "WILMA C.").
          - Extract address if present.
          - Convert dates (e.g. Birthdate "August 1, 1948", Visit dates) into standard YYYY-MM-DD format (e.g. "1948-08-01").
-         - Extract contactNumber, occupation, knownAllergies, pastMedicalHistory (include Medical Diagnosis / Medical History), surgicalHistory, smokingHistory, alcoholicIntake.
+         - Extract contactNumber, occupation, knownAllergies, pastMedicalHistory (include Medical Diagnosis / Medical History), surgicalHistory, smokingHistory, alcoholicIntake, medications, previousHospitalization.
       2. Prescriptions:
          - Extract ALL prescribed medications (e.g. under "MEDICATIONS" section or in consultations).
          - Separate medicationName (e.g. "Valsartan + Sacubutril (Sanare)", "Cilnidipine (Cildine)") from dosage (e.g. "200mg/tab", "20 mg/tab").
@@ -295,7 +297,7 @@ export const parseDocumentData = async (fileBuffer) => {
 
 const parseTextFallback = (text) => {
   const data = {
-    patient: { firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '', occupation: '', knownAllergies: '', pastMedicalHistory: '', surgicalHistory: '', smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: '' },
+    patient: { firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '', occupation: '', knownAllergies: '', pastMedicalHistory: '', surgicalHistory: '', smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: '', medications: '', previousHospitalization: '' },
     medicalRecord: { chiefComplaint: '', diagnosis: '', visitDate: '' },
     consultations: [],
     prescriptions: [],

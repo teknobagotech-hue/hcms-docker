@@ -229,6 +229,14 @@ export default function DocumentScanner() {
                       <input type="text" className="form-control" name="alcoholicIntake" value={formData.patient.alcoholicIntake || ''} onChange={handlePatientChange} />
                     </div>
                     <div className="form-group">
+                      <label className="form-label">Medications</label>
+                      <input type="text" className="form-control" name="medications" value={formData.patient.medications || ''} onChange={handlePatientChange} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Previous Hospitalization</label>
+                      <input type="text" className="form-control" name="previousHospitalization" value={formData.patient.previousHospitalization || ''} onChange={handlePatientChange} />
+                    </div>
+                    <div className="form-group">
                       <label className="form-label">Emergency Contact Name</label>
                       <input type="text" className="form-control" name="emergencyContactName" value={formData.patient.emergencyContactName || ''} onChange={handlePatientChange} />
                     </div>

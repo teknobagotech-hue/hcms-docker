@@ -152,6 +152,7 @@ export default function PatientsList() {
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="deceased">Deceased</option>
             </select>
           </div>
 
@@ -186,7 +187,10 @@ export default function PatientsList() {
                       <td>{new Date(patient.date_of_birth).toLocaleDateString()}</td>
                       <td>{patient.gender || '-'}</td>
                       <td>
-                        <span className={`badge ${patient.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: patient.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: patient.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                        <span className={`badge`} style={{ 
+                          backgroundColor: patient.status === 'active' ? '#DBEAFE' : patient.status === 'deceased' ? '#FEE2E2' : '#F1F5F9', 
+                          color: patient.status === 'active' ? '#1D4ED8' : patient.status === 'deceased' ? '#DC2626' : '#64748B' 
+                        }}>
                           {patient.status}
                         </span>
                       </td>

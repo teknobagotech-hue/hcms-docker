@@ -24,7 +24,7 @@ export default function PatientLabs({ patientId }) {
     { id: 'chem', label: 'Chemistry', table: 'lab_chemistry', idField: 'chem_id', dateField: 'test_date', icon: <FlaskConical size={16} /> },
     { id: 'serology', label: 'Serology', table: 'lab_serology', idField: 'serology_id', dateField: 'test_date', icon: <FlaskConical size={16} /> },
     { id: 'ua', label: 'Urinalysis', table: 'lab_urinalysis', idField: 'ua_id', dateField: 'test_date', icon: <FlaskConical size={16} /> },
-    { id: 'imaging', label: 'Imaging', table: 'imaging_reports', idField: 'imaging_id', dateField: 'record_date', icon: <ImageIcon size={16} /> }
+    { id: 'imaging', label: 'X-rays', table: 'imaging_reports', idField: 'imaging_id', dateField: 'record_date', icon: <ImageIcon size={16} /> }
   ];
 
   const location = useLocation();

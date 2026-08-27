@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Save, Upload, FileText, Image as ImageIcon, X, CheckCircle2, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Upload, FileText, Image as ImageIcon, X, CheckCircle2, Loader2, ExternalLink, Plus, Archive, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import SearchableSelect from '../../components/SearchableSelect';
 import { uploadFileToFirebase, MAX_FILE_SIZE_BYTES } from '../../firebaseClient';
 import '../../index.css';
@@ -26,8 +26,24 @@ export default function ImagingForm() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadInfo, setUploadInfo] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  const [modalities, setModalities] = useState([]);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [newModality, setNewModality] = useState('');
+  
+  const [modalSearchQuery, setModalSearchQuery] = useState('');
+  const [modalPage, setModalPage] = useState(1);
+  const modalLimit = 5;
+
+  const fetchModalities = async () => {
+    const { data, error } = await supabase.from('imaging_modalities').select('*').not('is_archived', 'eq', true).order('name');
+    if (data) {
+      setModalities(data.map(m => ({ label: m.name, value: m.name, id: m.id })));
+    }
+  };
 
   useEffect(() => {
+    fetchModalities();
     if (!isEditing) setFormData(prev => ({ ...prev, record_date: new Date().toISOString().split('T')[0] }));
     else fetchRecord();
   }, [id]);
@@ -142,6 +158,33 @@ export default function ImagingForm() {
     }
   };
 
+  const handleAddModality = async () => {
+    if (!newModality.trim()) return;
+    const { error } = await supabase.from('imaging_modalities').insert([{ name: newModality.trim() }]);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Modality added');
+      setNewModality('');
+      fetchModalities();
+    }
+  };
+
+  const handleArchiveModality = async (modId) => {
+    const { error } = await supabase.from('imaging_modalities').update({ is_archived: true }).eq('id', modId);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Modality archived');
+      fetchModalities();
+      // Reset selected modality if it was the one archived
+      const archivedMod = modalities.find(m => m.id === modId);
+      if (archivedMod && formData.modality === archivedMod.value) {
+        setFormData(prev => ({ ...prev, modality: '' }));
+      }
+    }
+  };
+
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
     if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
@@ -156,6 +199,7 @@ export default function ImagingForm() {
   return (
     <div className="dashboard-scroll-area">
       <div className="dashboard-container" style={{ maxWidth: '650px' }}>
+        {/* ... existing code above ... */}
         <div className="section-panel" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem' }}>
           <Link to={`/patients/view/${patient_id}?tab=labs&labCat=imaging`} className="icon-btn" style={{ padding: '0.5rem' }}>
             <ArrowLeft size={20} />
@@ -181,20 +225,20 @@ export default function ImagingForm() {
             </div>
             
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Modality *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <label className="form-label" style={{ margin: 0 }}>Modality *</label>
+                <button 
+                  type="button" 
+                  onClick={() => setIsManageModalOpen(true)} 
+                  className="btn" 
+                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: '#e2e8f0', border: 'none', color: '#475569' }}
+                >
+                  <Plus size={12} /> Manage
+                </button>
+              </div>
               <SearchableSelect
                 name="modality"
-                options={[
-                  { label: 'X-Ray', value: 'X-Ray' },
-                  { label: 'MRI', value: 'MRI' },
-                  { label: 'CT Scan', value: 'CT Scan' },
-                  { label: 'Ultrasound', value: 'Ultrasound' },
-                  { label: 'ECG', value: 'ECG' },
-                  { label: 'ULTRASOUND REPORTS', value: 'ULTRASOUND REPORTS' },
-                  { label: 'ARTERIAL DUPLEX SCAN', value: 'ARTERIAL DUPLEX SCAN' },
-                  { label: 'VENOUS DUPLEX SCAN', value: 'VENOUS DUPLEX SCAN' },
-                  { label: 'Other', value: 'Other' }
-                ]}
+                options={modalities}
                 value={formData.modality}
                 onChange={handleChange}
                 required
@@ -365,6 +409,106 @@ export default function ImagingForm() {
           </form>
         </div>
       </div>
+
+      {/* Manage Modalities Modal */}
+      {isManageModalOpen && (() => {
+        const filteredModalities = modalities.filter(m => m.label.toLowerCase().includes(modalSearchQuery.toLowerCase()));
+        const totalPages = Math.ceil(filteredModalities.length / modalLimit) || 1;
+        const paginatedModalities = filteredModalities.slice((modalPage - 1) * modalLimit, modalPage * modalLimit);
+
+        return (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', width: '90%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.125rem', color: 'var(--text-dark)' }}>Manage Modalities</h3>
+                <button onClick={() => setIsManageModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <X size={20} color="#64748b" />
+                </button>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="New Modality Name" 
+                  value={newModality}
+                  onChange={(e) => setNewModality(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddModality()}
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={handleAddModality}
+                  style={{ padding: '0.5rem 1rem' }}
+                  disabled={!newModality.trim()}
+                >
+                  Add
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                <Search size={16} color="#94a3b8" />
+                <input 
+                  type="text" 
+                  placeholder="Search modalities..." 
+                  value={modalSearchQuery}
+                  onChange={(e) => {
+                    setModalSearchQuery(e.target.value);
+                    setModalPage(1);
+                  }}
+                  style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.875rem' }}
+                />
+              </div>
+
+              <div style={{ overflowY: 'auto', flex: 1, border: '1px solid #e2e8f0', borderRadius: '4px' }}>
+                {paginatedModalities.length === 0 ? (
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>No modalities found</div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      {paginatedModalities.map(m => (
+                        <tr key={m.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}>{m.label}</td>
+                          <td style={{ padding: '0.5rem 0.75rem', width: '40px', textAlign: 'center' }}>
+                            <button 
+                              type="button"
+                              onClick={() => handleArchiveModality(m.id)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', padding: '0.2rem' }}
+                              title="Archive"
+                            >
+                              <Archive size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                  <button 
+                    onClick={() => setModalPage(p => Math.max(1, p - 1))} 
+                    disabled={modalPage === 1}
+                    style={{ padding: '0.25rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px', backgroundColor: '#fff', cursor: modalPage === 1 ? 'not-allowed' : 'pointer', opacity: modalPage === 1 ? 0.5 : 1 }}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Page {modalPage} of {totalPages}</span>
+                  <button 
+                    onClick={() => setModalPage(p => Math.min(totalPages, p + 1))} 
+                    disabled={modalPage === totalPages}
+                    style={{ padding: '0.25rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px', backgroundColor: '#fff', cursor: modalPage === totalPages ? 'not-allowed' : 'pointer', opacity: modalPage === totalPages ? 0.5 : 1 }}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

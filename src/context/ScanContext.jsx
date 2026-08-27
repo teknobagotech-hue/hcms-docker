@@ -50,7 +50,8 @@ const initialFormData = {
   patient: { 
     firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '',
     occupation: '', knownAllergies: '', pastMedicalHistory: '', surgicalHistory: '',
-    smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: ''
+    smokingHistory: '', alcoholicIntake: '', emergencyContactName: '', guardianName: '',
+    medications: '', previousHospitalization: ''
   },
   medicalRecord: { chiefComplaint: '', diagnosis: '', visitDate: '' },
   consultations: [],
@@ -353,6 +354,8 @@ export function ScanProvider({ children }) {
       if (formData.patient.alcoholicIntake) patientPayload.alcoholic_intake = formData.patient.alcoholicIntake;
       if (formData.patient.emergencyContactName) patientPayload.emergency_contact_name = formData.patient.emergencyContactName;
       if (formData.patient.guardianName) patientPayload.guardian_name = formData.patient.guardianName;
+      if (formData.patient.medications) patientPayload.medications = formData.patient.medications;
+      if (formData.patient.previousHospitalization) patientPayload.previous_hospitalization = formData.patient.previousHospitalization;
 
       if (existingPatient) {
         patientId = existingPatient.patient_id;

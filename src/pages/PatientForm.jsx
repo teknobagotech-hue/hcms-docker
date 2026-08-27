@@ -29,6 +29,8 @@ export default function PatientForm() {
     allergies: '',
     alcoholic_intake: '',
     smoking_history: '',
+    medications: '',
+    previous_hospitalization: '',
     
     // OBGYN (Optional based on gender, but we'll include it)
     gravida: '',
@@ -90,6 +92,8 @@ export default function PatientForm() {
         allergies: data.allergies || '',
         alcoholic_intake: data.alcoholic_intake || '',
         smoking_history: data.smoking_history || '',
+        medications: data.medications || '',
+        previous_hospitalization: data.previous_hospitalization || '',
         gravida: data.gravida || '',
         para: data.para || '',
         lmp: data.lmp || '',
@@ -231,7 +235,8 @@ export default function PatientForm() {
                     name="status"
                     options={[
                       { label: 'Active', value: 'active' },
-                      { label: 'Inactive', value: 'inactive' }
+                      { label: 'Inactive', value: 'inactive' },
+                      { label: 'Deceased', value: 'deceased' }
                     ]}
                     value={formData.status}
                     onChange={handleChange}
@@ -286,6 +291,14 @@ export default function PatientForm() {
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Smoking History</label>
                   <input type="text" name="smoking_history" className="form-input" style={{ paddingLeft: '1rem' }} value={formData.smoking_history} onChange={handleChange} placeholder="e.g. 1 pack/day, Never" />
+                </div>
+                <div className="form-group" style={{ margin: 0, gridColumn: '1 / -1' }}>
+                  <label className="form-label">Medications</label>
+                  <textarea name="medications" className="form-input" style={{ paddingLeft: '1rem', minHeight: '80px', padding: '0.5rem 1rem' }} value={formData.medications} onChange={handleChange} placeholder="List current medications"></textarea>
+                </div>
+                <div className="form-group" style={{ margin: 0, gridColumn: '1 / -1' }}>
+                  <label className="form-label">Previous Hospitalization</label>
+                  <textarea name="previous_hospitalization" className="form-input" style={{ paddingLeft: '1rem', minHeight: '80px', padding: '0.5rem 1rem' }} value={formData.previous_hospitalization} onChange={handleChange} placeholder="Details of previous hospitalizations"></textarea>
                 </div>
               </div>
             </div>

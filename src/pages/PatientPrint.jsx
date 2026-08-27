@@ -262,6 +262,8 @@ export default function PatientPrint() {
             <p style={{ margin: '0.35rem 0' }}><strong>Known Allergies:</strong> {patient.allergies || 'N/A'}</p>
             <p style={{ margin: '0.35rem 0' }}><strong>Smoking History:</strong> {patient.smoking_history || 'N/A'}</p>
             <p style={{ margin: '0.35rem 0' }}><strong>Alcohol Intake:</strong> {patient.alcoholic_intake || 'N/A'}</p>
+            <p style={{ margin: '0.35rem 0' }}><strong>Medications:</strong> {patient.medications || 'N/A'}</p>
+            <p style={{ margin: '0.35rem 0' }}><strong>Previous Hospitalization:</strong> {patient.previous_hospitalization || 'N/A'}</p>
           </div>
         </div>
       </div>

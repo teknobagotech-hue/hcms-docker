@@ -70,8 +70,8 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
           html, body { width: 11in; height: 8.5in; margin: 0; padding: 0; overflow: hidden; background: white; display: block; position: relative; }
           .print-container { 
             position: absolute;
-            right: 0;
-            top: 0.695in;
+            left: 0;
+            top: 0;
             width: 8.5in;
             height: 11in;
             min-height: auto;
@@ -79,7 +79,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
             padding: 0.8in 0.6in; 
             border: none;
             box-shadow: none;
-            transform-origin: top right;
+            transform-origin: top left;
             transform: scale(0.647);
           }
           .no-print { display: none !important; }
@@ -225,8 +225,8 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
           html, body { width: 11in; height: 8.5in; margin: 0; padding: 0; overflow: hidden; background: white; display: block; position: relative; }
           .print-container { 
             position: absolute;
-            right: 0;
-            top: 0.695in;
+            left: 0;
+            top: 0;
             width: 8.5in;
             height: 11in;
             min-height: auto;
@@ -234,7 +234,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
             padding: 0.8in 0.6in; 
             border: none;
             box-shadow: none;
-            transform-origin: top right;
+            transform-origin: top left;
             transform: scale(0.647);
           }
           .no-print { display: none !important; }
@@ -821,12 +821,12 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
       const sig = sigParts ? `Sig: ${sigParts}` : '';
 
       return `
-        <div style="margin-bottom: 6px; page-break-inside: avoid;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; font-size: 12px;">
+        <div style="margin-bottom: 12px; page-break-inside: avoid;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; font-size: 16px;">
             <span>${medName}</span>
-            <span style="font-size: 11px; font-weight: 600;">${qty}</span>
+            <span style="font-size: 14px; font-weight: 600;">${qty}</span>
           </div>
-          ${sig ? `<div style="margin-left: 15px; font-size: 11px; font-style: italic; margin-top: 1px; color: #111; line-height: 1.25;">${sig}</div>` : ''}
+          ${sig ? `<div style="margin-left: 15px; font-size: 14px; font-style: italic; margin-top: 3px; color: #111; line-height: 1.35;">${sig}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -834,13 +834,13 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
 
   // Additional notes/instructions if present
   if (prescription?.notes && !prescription.notes.includes('Extracted from document')) {
-    rxBodyContent += `<div style="margin-top: 10px; font-size: 11px; line-height: 1.3; white-space: pre-wrap; font-style: italic;"><strong>Special Instructions:</strong><br/>${prescription.notes}</div>`;
+    rxBodyContent += `<div style="margin-top: 15px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; font-style: italic;"><strong>Special Instructions:</strong><br/>${prescription.notes}</div>`;
   } else if (prescription?.prescription_text) {
-    rxBodyContent += `<div style="margin-top: 10px; font-size: 11px; line-height: 1.3; white-space: pre-wrap; font-style: italic;">${prescription.prescription_text}</div>`;
+    rxBodyContent += `<div style="margin-top: 15px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; font-style: italic;">${prescription.prescription_text}</div>`;
   }
 
   if (!rxBodyContent.trim()) {
-    rxBodyContent = '<div style="color: #666; font-style: italic; font-size: 11px;">No medications listed.</div>';
+    rxBodyContent = '<div style="color: #666; font-style: italic; font-size: 14px;">No medications listed.</div>';
   }
 
   const htmlContent = `
@@ -860,6 +860,8 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           position: relative;
           background: white;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          display: flex;
+          flex-direction: column;
         }
         
         .doc-header-name { 
@@ -934,6 +936,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         }
 
         .rx-body {
+          flex-grow: 1;
           font-family: 'Lucida Calligraphy', 'Dancing Script', 'Apple Chancery', cursive, serif;
           font-size: 12px;
           line-height: 1.3;
@@ -944,7 +947,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
         }
 
         .signature-block {
-          float: right;
+          align-self: flex-end;
           text-align: left;
           margin-top: 30px;
           margin-bottom: 15px;
@@ -998,16 +1001,16 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           html, body { width: 11in; height: 8.5in; margin: 0; padding: 0; overflow: hidden; background: white; display: block; position: relative; }
           .print-container { 
             position: absolute;
-            right: 0;
-            top: 0.695in;
+            left: 0;
+            top: 0;
             width: 8.5in;
-            height: 11in;
+            height: 13.1in;
             min-height: auto;
             margin: 0;
             padding: 0.8in 0.6in; 
             border: none;
             box-shadow: none;
-            transform-origin: top right;
+            transform-origin: top left;
             transform: scale(0.647);
           }
           .no-print { display: none !important; }

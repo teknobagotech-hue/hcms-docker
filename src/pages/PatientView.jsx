@@ -139,7 +139,10 @@ export default function PatientView() {
                 <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'var(--text-dark)' }}>
                   {patient.last_name}, {patient.first_name} {patient.middle_name}
                 </h1>
-                <span className={`badge ${patient.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: patient.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: patient.status === 'active' ? '#1D4ED8' : '#64748B' }}>
+                <span className={`badge`} style={{ 
+                  backgroundColor: patient.status === 'active' ? '#DBEAFE' : patient.status === 'deceased' ? '#FEE2E2' : '#F1F5F9', 
+                  color: patient.status === 'active' ? '#1D4ED8' : patient.status === 'deceased' ? '#DC2626' : '#64748B' 
+                }}>
                   {patient.status.toUpperCase()}
                 </span>
               </div>
@@ -225,6 +228,14 @@ export default function PatientView() {
                 <div>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Surgical History</span>
                   <div style={{ color: 'var(--text-dark)', marginTop: '0.25rem' }}>{patient.surgical_history || 'None'}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Medications</span>
+                  <div style={{ color: 'var(--text-dark)', marginTop: '0.25rem' }}>{patient.medications || 'None'}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Previous Hospitalization</span>
+                  <div style={{ color: 'var(--text-dark)', marginTop: '0.25rem' }}>{patient.previous_hospitalization || 'None'}</div>
                 </div>
               </div>
             </div>
