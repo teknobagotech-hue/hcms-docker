@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, Printer, FileText, Send } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Printer } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 import DocumentPrintModal from './DocumentPrintModal';
@@ -81,42 +81,7 @@ export default function PatientDocuments({ patientId }) {
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <TablePrintControls records={records} title="Documents Records" columns={printColumns} dateField="issue_date" />
-          
-          <button 
-            onClick={() => handleOpenPrint(null, 'Medical Certificate')} 
-            className="btn" 
-            style={{ 
-              backgroundColor: '#F0FDF4', 
-              color: '#15803D', 
-              border: '1px solid #BBF7D0',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              padding: '0.5rem 0.85rem', 
-              fontSize: '0.875rem',
-              fontWeight: 500
-            }}
-          >
-            <FileText size={16} /> Print Med Cert
-          </button>
 
-          <button 
-            onClick={() => handleOpenPrint(null, 'Referral Letter')} 
-            className="btn" 
-            style={{ 
-              backgroundColor: '#EFF6FF', 
-              color: '#1D4ED8', 
-              border: '1px solid #BFDBFE',
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              padding: '0.5rem 0.85rem', 
-              fontSize: '0.875rem',
-              fontWeight: 500
-            }}
-          >
-            <Send size={16} /> Print Referral
-          </button>
 
           <Link to={`/patients/${patientId}/lab/docs/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> Add Document
