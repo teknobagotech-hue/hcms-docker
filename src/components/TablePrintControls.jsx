@@ -80,7 +80,7 @@ export default function TablePrintControls({
             <tr>
               ${columns.map(c => {
       const val = c.render ? c.render(r) : r[c.key] || '-';
-      return `<td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 8.5pt; vertical-align: top; word-break: break-word; overflow-wrap: break-word; white-space: normal;">${val}</td>`;
+      return `<td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 8.5pt; vertical-align: top; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${val}</td>`;
     }).join('')}
             </tr>
           `).join('')}

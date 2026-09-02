@@ -294,7 +294,7 @@ export default function PatientPrint() {
                 <th style={{ width: '13%' }}>ATTENDING DOCTOR</th>
                 <th style={{ width: '18%' }}>CHIEF COMPLAINT</th>
                 <th style={{ width: '22%' }}>DIAGNOSIS</th>
-                <th style={{ width: '38%' }}>PLAN / DETAILS</th>
+                <th style={{ width: '38%' }}>SOAP NOTES / DETAILS</th>
               </tr>
             </thead>
             <tbody>

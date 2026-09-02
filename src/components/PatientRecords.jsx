@@ -21,20 +21,59 @@ export default function PatientRecords({ patientId, patient }) {
   const [selectedId, setSelectedId] = useState(null);
 
   const printColumns = [
-    { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString() },
-    { label: 'Attending Doctor', render: (r) => r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-' },
-    { label: 'Chief Complaint', key: 'chief_complaint' },
-    { label: 'Diagnosis', key: 'diagnosis' },
-    { label: 'Treatment Provided', render: (r) => r.treatment || r.treatment_plan || '-' },
+    { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString(), width: '10%' },
+    { label: 'Attending Doctor', render: (r) => r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-', width: '14%' },
+    { label: 'Chief Complaint', key: 'chief_complaint', width: '18%' },
+    { label: 'Diagnosis', key: 'diagnosis', width: '20%' },
+    { label: 'Treatment Provided', render: (r) => r.treatment || r.treatment_plan || '-', width: '12%' },
     {
       label: 'SOAP Notes',
+      width: '26%',
       render: (r) => {
         const parts = [];
-        if (r.subjective) parts.push(`Subjective: ${r.subjective}`);
-        if (r.objective) parts.push(`Objective: ${r.objective}`);
-        if (r.assessment) parts.push(`Assessment: ${r.assessment}`);
-        if (r.plan) parts.push(`Plan: ${r.plan}`);
-        return parts.length > 0 ? parts.join('\n') : '-';
+
+        const addSection = (label, text) => {
+          if (!text || !text.trim()) return;
+          
+          const regex = /(Subjective:|Objective:|Assessment:|Plan:|Treatment:)/gi;
+          if (regex.test(text)) {
+            const tokens = text.split(/(Subjective:|Objective:|Assessment:|Plan:|Treatment:)/gi).filter(Boolean);
+            let currentHeader = label;
+            let currentContent = '';
+
+            for (let i = 0; i < tokens.length; i++) {
+              const token = tokens[i].trim();
+              if (/^(Subjective:|Objective:|Assessment:|Plan:|Treatment:)$/i.test(token)) {
+                if (currentContent.trim()) {
+                  parts.push({ header: currentHeader, content: currentContent.trim() });
+                }
+                currentHeader = token.replace(':', '');
+                currentContent = '';
+              } else {
+                currentContent += (currentContent ? ' ' : '') + token;
+              }
+            }
+            if (currentContent.trim()) {
+              parts.push({ header: currentHeader, content: currentContent.trim() });
+            }
+          } else {
+            parts.push({ header: label, content: text.trim() });
+          }
+        };
+
+        if (r.subjective) addSection('Subjective', r.subjective);
+        if (r.objective) addSection('Objective', r.objective);
+        if (r.assessment) addSection('Assessment', r.assessment);
+        if (r.plan) addSection('Plan', r.plan);
+        if (r.treatment || r.treatment_plan) addSection('Treatment', r.treatment || r.treatment_plan);
+
+        if (parts.length === 0) return '-';
+
+        const uniqueParts = parts.filter((p, idx, self) => 
+          idx === self.findIndex(t => t.header.toLowerCase() === p.header.toLowerCase() && t.content === p.content)
+        );
+
+        return uniqueParts.map(pt => `<div style="margin-bottom: 4px;"><strong>${pt.header}:</strong> ${pt.content}</div>`).join('');
       }
     }
   ];
