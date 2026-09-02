@@ -81,8 +81,8 @@ export default function TablePrintControls({
             th { word-break: break-word; overflow-wrap: break-word; white-space: normal; }
             td { word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
             @media print {
-              @page { margin: 10mm; size: A4 portrait; }
-              body { padding: 0; margin: 0; }
+              @page { margin: 0; size: A4 portrait; }
+              body { padding: 10mm; margin: 0; }
               button { display: none !important; }
               table { width: 100% !important; table-layout: fixed !important; border-collapse: collapse !important; }
               th { word-break: break-word !important; overflow-wrap: break-word !important; white-space: normal !important; }

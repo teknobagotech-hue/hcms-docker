@@ -151,14 +151,14 @@ export default function PatientPrint() {
               print-color-adjust: exact !important;
             }
             .print-container { 
-              padding: 0 !important; 
+              padding: 8mm 10mm !important; 
               width: 100% !important; 
               max-width: 100% !important; 
               margin: 0 !important; 
               box-sizing: border-box !important;
             }
             @page { 
-              margin: 8mm 10mm; 
+              margin: 0; 
               size: A4 portrait; 
             }
             .page-break { page-break-before: always; }

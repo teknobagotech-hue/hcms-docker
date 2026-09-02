@@ -279,10 +279,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
 
         @media print {
           @page { 
-            margin-top: 0.65in;
-            margin-bottom: 0.4in;
-            margin-left: 0;
-            margin-right: 0;
+            margin: 0; 
             size: letter landscape; 
           }
           html, body { 
@@ -301,7 +298,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
             max-width: 5.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0 0.35in !important; 
+            padding: 0.65in 0.35in 0.4in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
@@ -472,7 +469,8 @@ export function printPharmacyReceipt({ sale, items = [] }) {
         .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
         
         @media print {
-          body { padding: 0; }
+          @page { margin: 0; }
+          body { padding: 15mm; }
           .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
           .no-print { display: none !important; }
         }
@@ -619,7 +617,8 @@ export function printBillingReceipt({ bill }) {
         .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
         
         @media print {
-          body { padding: 0; }
+          @page { margin: 0; }
+          body { padding: 15mm; }
           .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
           .no-print { display: none !important; }
         }
@@ -750,7 +749,8 @@ export function printStockReceipt({ receipt, items = [] }) {
         .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
         
         @media print {
-          body { padding: 0; }
+          @page { margin: 0; }
+          body { padding: 15mm; }
           .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
           .no-print { display: none !important; }
         }
@@ -1090,10 +1090,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
 
         @media print {
           @page { 
-            margin-top: 0.65in;
-            margin-bottom: 0.4in;
-            margin-left: 0;
-            margin-right: 0;
+            margin: 0; 
             size: letter landscape; 
           }
           html, body { 
@@ -1112,7 +1109,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
             max-width: 5.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0 0.35in !important; 
+            padding: 0.65in 0.35in 0.4in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
