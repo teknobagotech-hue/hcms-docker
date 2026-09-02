@@ -6,9 +6,10 @@ import { Plus, Edit, Trash2, Eye, FileText, FlaskConical, Stethoscope, Image as 
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
-export default function PatientLabs({ patientId }) {
+export default function PatientLabs({ patientId, patient }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [patientData, setPatientData] = useState(patient || null);
   
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -18,6 +19,16 @@ export default function PatientLabs({ patientId }) {
   const itemsPerPage = 10;
 
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   const categories = [
     { id: 'cbc', label: 'CBC', table: 'lab_cbc', idField: 'cbc_id', dateField: 'test_date', icon: <FlaskConical size={16} /> },
@@ -419,6 +430,7 @@ export default function PatientLabs({ patientId }) {
             dateField={currentCat.dateField}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            patient={patientData}
           />
           <Link to={`/patients/${patientId}/lab/${currentCat.id}/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> Add {currentCat.label}

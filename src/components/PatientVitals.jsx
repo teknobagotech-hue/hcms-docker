@@ -6,9 +6,10 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
-export default function PatientVitals({ patientId }) {
+export default function PatientVitals({ patientId, patient }) {
   const [vitals, setVitals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [patientData, setPatientData] = useState(patient || null);
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -27,6 +28,16 @@ export default function PatientVitals({ patientId }) {
     { label: 'Temp (°C)', key: 'temperature_c' },
     { label: 'Weight (kg)', key: 'weight_kg' }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchVitals();
@@ -90,6 +101,7 @@ export default function PatientVitals({ patientId }) {
             dateField="record_date" 
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            patient={patientData}
           />
           <Link to={`/patients/${patientId}/vitals/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> Record Vitals

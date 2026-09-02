@@ -1207,5 +1207,108 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
   executePrint(htmlContent);
 }
 
+export function printAppointmentSlip({ appointment, patient }) {
+  const patientName = patient ? `${patient.first_name || ''} ${patient.middle_name || ''} ${patient.last_name || ''}`.replace(/\s+/g, ' ').trim() : 'Patient';
+  const doctorName = appointment?.doctors ? `Dr. ${appointment.doctors.first_name} ${appointment.doctors.last_name}` : 'Unassigned Doctor';
+  const specialty = appointment?.doctors?.specialty || '';
+  const apptDate = appointment?.appointment_date ? new Date(appointment.appointment_date).toLocaleString('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }) : '-';
+  const purpose = appointment?.purpose || 'General Consultation';
+  const status = (appointment?.status || 'Scheduled').toUpperCase();
+  const notes = appointment?.notes || '';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Appointment Slip - ${patientName}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; color: #0f172a; background: #f8fafc; margin: 0; padding: 20px; }
+        .slip-card {
+          max-width: 550px;
+          margin: 0 auto;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 28px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        .header { text-align: center; border-bottom: 2px solid #0d9488; padding-bottom: 16px; margin-bottom: 20px; }
+        .clinic-name { font-size: 18px; font-weight: 700; color: #0d9488; text-transform: uppercase; letter-spacing: 0.5px; }
+        .doc-name { font-size: 14px; font-weight: 600; color: #334155; margin-top: 4px; }
+        .slip-title { text-align: center; font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .info-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; }
+        .label { font-weight: 600; color: #64748b; }
+        .value { font-weight: 600; color: #0f172a; text-align: right; }
+        .box { background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #0f172a; line-height: 1.5; }
+        .footer { margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11px; color: #64748b; text-align: center; }
+        @media print {
+          body { background: white; padding: 0; }
+          .slip-card { box-shadow: none; border: 1px solid #ccc; max-width: 100%; margin: 0; border-radius: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="slip-card">
+        <div class="header">
+          <div class="clinic-name">HEART & VASCULAR CLINICAL SERVICES</div>
+          <div class="doc-name">Dr. Gladdays Casuga-Napigkit, MD, FPCP, FPCC, FPSVM</div>
+        </div>
+        <div class="slip-title">APPOINTMENT CONFIRMATION SLIP</div>
+        
+        <div class="info-grid">
+          <div class="row">
+            <span class="label">Patient Name:</span>
+            <span class="value">${patientName}</span>
+          </div>
+          <div class="row">
+            <span class="label">Date & Time:</span>
+            <span class="value" style="color: #0d9488; font-size: 15px;">${apptDate}</span>
+          </div>
+          <div class="row">
+            <span class="label">Attending Doctor:</span>
+            <span class="value">${doctorName} ${specialty ? `(${specialty})` : ''}</span>
+          </div>
+          <div class="row">
+            <span class="label">Purpose / Reason:</span>
+            <span class="value">${purpose}</span>
+          </div>
+          <div class="row" style="border-bottom: none;">
+            <span class="label">Status:</span>
+            <span class="value" style="color: #0284c7;">${status}</span>
+          </div>
+        </div>
+
+        ${notes ? `
+          <div class="box">
+            <strong>Notes:</strong> ${notes}
+          </div>
+        ` : ''}
+
+        <div class="box" style="background: #fffbeb; border-color: #fde68a;">
+          <strong>Reminder:</strong> Please arrive 15 minutes before your scheduled appointment time. Kindly bring any recent lab results or previous medical records.
+        </div>
+
+        <div class="footer">
+          Printed on ${new Date().toLocaleString()} • MedDesk Clinic Management System
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  executePrint(htmlContent);
+}
+
+
 
 

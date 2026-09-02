@@ -2,20 +2,23 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, Archive } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Archive, Printer } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
+import { printAppointmentSlip } from '../utils/printDocumentTemplates';
 
-export default function PatientAppointments({ patientId }) {
+export default function PatientAppointments({ patientId, patient }) {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [patientData, setPatientData] = useState(patient || null);
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const limit = 10;
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedAppt, setSelectedAppt] = useState(null);
+  const [actionType, setActionType] = useState('delete');
 
   const printColumns = [
     { label: 'Date & Time', render: (r) => new Date(r.appointment_date).toLocaleString() },
@@ -23,6 +26,16 @@ export default function PatientAppointments({ patientId }) {
     { label: 'Purpose', key: 'purpose' },
     { label: 'Status', render: (r) => r.status.toUpperCase() }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchAppointments();
@@ -49,17 +62,43 @@ export default function PatientAppointments({ patientId }) {
     setLoading(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('appointments')
-      .delete()
-      .eq('appointment_id', selectedId);
+  const handlePrintAppointment = (appt) => {
+    printAppointmentSlip({ appointment: appt, patient: patientData });
+  };
 
-    if (error) {
-      toast.error('Failed to delete appointment');
-    } else {
-      toast.success('Appointment deleted');
-      fetchAppointments();
+  const openConfirmModal = (type, appt) => {
+    setActionType(type);
+    setSelectedAppt(appt);
+    setModalOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!selectedAppt) return;
+
+    if (actionType === 'delete') {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('appointment_id', selectedAppt.appointment_id);
+
+      if (error) {
+        toast.error('Failed to delete appointment');
+      } else {
+        toast.success('Appointment deleted');
+        fetchAppointments();
+      }
+    } else if (actionType === 'cancel') {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('appointment_id', selectedAppt.appointment_id);
+
+      if (error) {
+        toast.error('Failed to cancel appointment');
+      } else {
+        toast.success('Appointment cancelled');
+        fetchAppointments();
+      }
     }
     setModalOpen(false);
   };
@@ -73,7 +112,7 @@ export default function PatientAppointments({ patientId }) {
           Appointment History
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <TablePrintControls records={appointments} title="Appointment History" columns={printColumns} dateField="appointment_date" />
+          <TablePrintControls records={appointments} title="Appointment History" columns={printColumns} dateField="appointment_date" patient={patientData} />
           <Link to={`/patients/${patientId}/appointments/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> Schedule
           </Link>
@@ -117,6 +156,12 @@ export default function PatientAppointments({ patientId }) {
                   </td>
                   <td>
                     <div className="table-actions">
+                      <button className="icon-btn print" title="Print Slip" onClick={() => handlePrintAppointment(appt)} style={{ color: '#0d9488' }}>
+                        <Printer size={18} />
+                      </button>
+                      <Link to={`/patients/${patientId}/view/appointments/${appt.appointment_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Details">
+                        <Eye size={18} />
+                      </Link>
                       <Link to={`/patients/${patientId}/appointments/edit/${appt.appointment_id}`} className="icon-btn edit" title="Edit">
                         <Edit size={18} />
                       </Link>
@@ -150,12 +195,13 @@ export default function PatientAppointments({ patientId }) {
       <ConfirmModal 
         isOpen={modalOpen} 
         onCancel={() => setModalOpen(false)}
-        title="Delete Appointment"
-        message="Are you sure you want to delete this appointment?"
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
+        title={actionType === 'delete' ? 'Delete Appointment' : 'Cancel Appointment'}
+        message={actionType === 'delete' ? 'Are you sure you want to delete this appointment?' : 'Are you sure you want to cancel this scheduled appointment?'}
+        confirmText={actionType === 'delete' ? 'Delete' : 'Cancel Appointment'}
+        confirmType={actionType === 'delete' ? 'danger' : 'warning'}
+        onConfirm={handleConfirmAction}
       />
     </div>
   );
 }
+

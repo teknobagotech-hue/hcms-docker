@@ -6,12 +6,13 @@ import { Plus, Edit, Trash2, Heart, CheckCircle2, XCircle, Eye } from 'lucide-re
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
-export default function PatientRecords({ patientId }) {
+export default function PatientRecords({ patientId, patient }) {
   const [records, setRecords] = useState([]);
   const [cardio, setCardio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingCardio, setLoadingCardio] = useState(true);
-  
+  const [patientData, setPatientData] = useState(patient || null);
+
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const limit = 10;
@@ -23,8 +24,30 @@ export default function PatientRecords({ patientId }) {
     { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString() },
     { label: 'Attending Doctor', render: (r) => r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-' },
     { label: 'Chief Complaint', key: 'chief_complaint' },
-    { label: 'Diagnosis', key: 'diagnosis' }
+    { label: 'Diagnosis', key: 'diagnosis' },
+    { label: 'Treatment Provided', render: (r) => r.treatment || r.treatment_plan || '-' },
+    {
+      label: 'SOAP Notes',
+      render: (r) => {
+        const parts = [];
+        if (r.subjective) parts.push(`Subjective: ${r.subjective}`);
+        if (r.objective) parts.push(`Objective: ${r.objective}`);
+        if (r.assessment) parts.push(`Assessment: ${r.assessment}`);
+        if (r.plan) parts.push(`Plan: ${r.plan}`);
+        return parts.length > 0 ? parts.join('\n') : '-';
+      }
+    }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchRecords();
@@ -59,7 +82,7 @@ export default function PatientRecords({ patientId }) {
       .select('*')
       .eq('patient_id', patientId)
       .maybeSingle();
-    
+
     if (data) setCardio(data);
     setLoadingCardio(false);
   };
@@ -83,7 +106,7 @@ export default function PatientRecords({ patientId }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* Cardio History Summary Card */}
       <div className="section-panel" style={{ margin: 0, backgroundColor: '#FDF8F6', border: '1px solid #F87171' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
@@ -114,7 +137,7 @@ export default function PatientRecords({ patientId }) {
               {cardio.family_history_heart_disease ? <XCircle size={18} /> : <CheckCircle2 size={18} />} Family History: {cardio.family_history_heart_disease ? 'Yes' : 'No'}
             </div>
             <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem', color: '#7F1D1D' }}>
-              <strong>Smoker Status:</strong> {cardio.smoker_status || 'Unknown'} <br/>
+              <strong>Smoker Status:</strong> {cardio.smoker_status || 'Unknown'} <br />
               {cardio.pacemaker_details && <><strong>Pacemaker:</strong> {cardio.pacemaker_details}</>}
             </div>
           </div>
@@ -128,7 +151,7 @@ export default function PatientRecords({ patientId }) {
             Clinical Encounters (Medical Records)
           </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <TablePrintControls records={records} title="Clinical Encounters" columns={printColumns} dateField="record_date" />
+            <TablePrintControls records={records} title="Clinical Encounters" columns={printColumns} dateField="record_date" patient={patientData} />
             <Link to={`/patients/${patientId}/records/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
               <Plus size={16} /> New Encounter
             </Link>
@@ -143,14 +166,16 @@ export default function PatientRecords({ patientId }) {
                 <th>Attending Doctor</th>
                 <th>Chief Complaint</th>
                 <th>Diagnosis</th>
+                <th>Treatment Provided</th>
+                <th>SOAP Notes</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
               ) : records.length === 0 ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No medical records found.</td></tr>
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>No medical records found.</td></tr>
               ) : (
                 records.map(rec => (
                   <tr key={rec.record_id}>
@@ -159,24 +184,43 @@ export default function PatientRecords({ patientId }) {
                     </td>
                     <td>{rec.doctors ? `Dr. ${rec.doctors.first_name} ${rec.doctors.last_name}` : '-'}</td>
                     <td>
-                      <div style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ maxWidth: '180px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={rec.chief_complaint}>
                         {rec.chief_complaint || '-'}
                       </div>
                     </td>
                     <td>
-                      <div style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={rec.diagnosis}>
                         {rec.diagnosis || '-'}
                       </div>
                     </td>
                     <td>
+                      <div style={{ maxWidth: '160px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={rec.treatment || rec.treatment_plan}>
+                        {rec.treatment || rec.treatment_plan || '-'}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ maxWidth: '220px', fontSize: '0.825rem', lineHeight: '1.3' }}>
+                        {rec.subjective || rec.objective || rec.assessment || rec.plan ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                            {rec.subjective && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Subjective: ${rec.subjective}`}><strong style={{ color: '#0d9488' }}>S:</strong> {rec.subjective}</div>}
+                            {rec.objective && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Objective: ${rec.objective}`}><strong style={{ color: '#2563eb' }}>O:</strong> {rec.objective}</div>}
+                            {rec.assessment && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Assessment: ${rec.assessment}`}><strong style={{ color: '#d97706' }}>A:</strong> {rec.assessment}</div>}
+                            {rec.plan && <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={`Plan: ${rec.plan}`}><strong style={{ color: '#16a34a' }}>P:</strong> {rec.plan}</div>}
+                          </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-gray)' }}>-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
                       <div className="table-actions">
-                        <Link to={`/patients/${patientId}/view/records/${rec.record_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>
+                        <Link to={`/patients/${patientId}/view/records/${rec.record_id}`} className="icon-btn" style={{ color: 'var(--primary)' }} title="View Details">
                           <Eye size={16} />
                         </Link>
-                        <Link to={`/patients/${patientId}/records/edit/${rec.record_id}`} className="icon-btn edit">
+                        <Link to={`/patients/${patientId}/records/edit/${rec.record_id}`} className="icon-btn edit" title="Edit Record">
                           <Edit size={16} />
                         </Link>
-                        <button className="icon-btn delete" onClick={() => { setSelectedId(rec.record_id); setModalOpen(true); }}>
+                        <button className="icon-btn delete" title="Delete Record" onClick={() => { setSelectedId(rec.record_id); setModalOpen(true); }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -199,8 +243,8 @@ export default function PatientRecords({ patientId }) {
         )}
       </div>
 
-      <ConfirmModal 
-        isOpen={modalOpen} 
+      <ConfirmModal
+        isOpen={modalOpen}
         onCancel={() => setModalOpen(false)}
         title="Delete Encounter"
         message="Are you sure you want to delete this medical record? This action cannot be undone."

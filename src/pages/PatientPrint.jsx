@@ -290,22 +290,72 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '10%' }}>DATE</th>
-                <th style={{ width: '15%' }}>ATTENDING DOCTOR</th>
-                <th style={{ width: '23%' }}>CHIEF COMPLAINT</th>
-                <th style={{ width: '20%' }}>DIAGNOSIS</th>
-                <th style={{ width: '32%' }}>PLAN / DETAILS</th>
+                <th style={{ width: '9%' }}>DATE</th>
+                <th style={{ width: '13%' }}>ATTENDING DOCTOR</th>
+                <th style={{ width: '18%' }}>CHIEF COMPLAINT</th>
+                <th style={{ width: '22%' }}>DIAGNOSIS</th>
+                <th style={{ width: '38%' }}>PLAN / DETAILS</th>
               </tr>
             </thead>
             <tbody>
               {records.map(r => {
-                const planOrDetails = [
-                  r.plan ? `Plan: ${r.plan}` : null,
-                  r.treatment ? `Treatment: ${r.treatment}` : null,
-                  r.subjective ? `Subjective: ${r.subjective}` : null,
-                  r.objective ? `Objective: ${r.objective}` : null,
-                  r.assessment ? `Assessment: ${r.assessment}` : null
-                ].filter(Boolean).join('\n');
+                const renderSoapDetails = () => {
+                  const parts = [];
+
+                  const addSection = (label, text) => {
+                    if (!text || !text.trim()) return;
+                    
+                    // Check if string has inline embedded headers like "Assessment:" or "Plan:"
+                    const regex = /(Subjective:|Objective:|Assessment:|Plan:|Treatment:)/gi;
+                    if (regex.test(text)) {
+                      const tokens = text.split(/(Subjective:|Objective:|Assessment:|Plan:|Treatment:)/gi).filter(Boolean);
+                      let currentHeader = label;
+                      let currentContent = '';
+
+                      for (let i = 0; i < tokens.length; i++) {
+                        const token = tokens[i].trim();
+                        if (/^(Subjective:|Objective:|Assessment:|Plan:|Treatment:)$/i.test(token)) {
+                          if (currentContent.trim()) {
+                            parts.push({ header: currentHeader, content: currentContent.trim() });
+                          }
+                          currentHeader = token.replace(':', '');
+                          currentContent = '';
+                        } else {
+                          currentContent += (currentContent ? ' ' : '') + token;
+                        }
+                      }
+                      if (currentContent.trim()) {
+                        parts.push({ header: currentHeader, content: currentContent.trim() });
+                      }
+                    } else {
+                      parts.push({ header: label, content: text.trim() });
+                    }
+                  };
+
+                  if (r.subjective) addSection('Subjective', r.subjective);
+                  if (r.objective) addSection('Objective', r.objective);
+                  if (r.assessment) addSection('Assessment', r.assessment);
+                  if (r.plan) addSection('Plan', r.plan);
+                  if (r.treatment || r.treatment_plan) addSection('Treatment', r.treatment || r.treatment_plan);
+
+                  if (parts.length === 0) return '-';
+
+                  // Deduplicate identical headers/content if any
+                  const uniqueParts = parts.filter((p, idx, self) => 
+                    idx === self.findIndex(t => t.header.toLowerCase() === p.header.toLowerCase() && t.content === p.content)
+                  );
+
+                  return (
+                    <div style={{ fontSize: '8pt', lineHeight: '1.4' }}>
+                      {uniqueParts.map((pt, i) => (
+                        <div key={i} style={{ marginBottom: i < uniqueParts.length - 1 ? '5px' : '0' }}>
+                          <strong style={{ color: '#0f172a', display: 'block', marginBottom: '1px' }}>{pt.header}:</strong>
+                          <span>{pt.content}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                };
 
                 return (
                   <tr key={r.record_id}>
@@ -313,7 +363,7 @@ export default function PatientPrint() {
                     <td>{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-'}</td>
                     <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.chief_complaint || '-'}</td>
                     <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.diagnosis || '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{planOrDetails || '-'}</td>
+                    <td style={{ verticalAlign: 'top' }}>{renderSoapDetails()}</td>
                   </tr>
                 );
               })}

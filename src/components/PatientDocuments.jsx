@@ -7,9 +7,10 @@ import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 import DocumentPrintModal from './DocumentPrintModal';
 
-export default function PatientDocuments({ patientId }) {
+export default function PatientDocuments({ patientId, patient }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [patientData, setPatientData] = useState(patient || null);
   
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -29,6 +30,16 @@ export default function PatientDocuments({ patientId }) {
     { label: 'Purpose', key: 'purpose' },
     { label: 'Diagnosis', key: 'diagnosis_impression' }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchRecords();
@@ -80,7 +91,7 @@ export default function PatientDocuments({ patientId }) {
           Documents Records
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <TablePrintControls records={records} title="Documents Records" columns={printColumns} dateField="issue_date" />
+          <TablePrintControls records={records} title="Documents Records" columns={printColumns} dateField="issue_date" patient={patientData} />
 
 
           <Link to={`/patients/${patientId}/lab/docs/add`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>

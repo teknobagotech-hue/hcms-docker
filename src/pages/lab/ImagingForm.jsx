@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Save, Upload, FileText, Image as ImageIcon, X, CheckCircle2, Loader2, ExternalLink, Plus, Archive, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Save, Upload, FileText, Image as ImageIcon, X, CheckCircle2, Loader2, ExternalLink, Plus, Archive, Search, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import SearchableSelect from '../../components/SearchableSelect';
 import { uploadFileToFirebase, MAX_FILE_SIZE_BYTES } from '../../firebaseClient';
 import '../../index.css';
@@ -28,17 +28,24 @@ export default function ImagingForm() {
   const [isDragging, setIsDragging] = useState(false);
   
   const [modalities, setModalities] = useState([]);
+  const [archivedModalities, setArchivedModalities] = useState([]);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [newModality, setNewModality] = useState('');
+  const [modalTab, setModalTab] = useState('active'); // 'active' or 'archived'
   
   const [modalSearchQuery, setModalSearchQuery] = useState('');
   const [modalPage, setModalPage] = useState(1);
   const modalLimit = 5;
 
   const fetchModalities = async () => {
-    const { data, error } = await supabase.from('imaging_modalities').select('*').not('is_archived', 'eq', true).order('name');
-    if (data) {
-      setModalities(data.map(m => ({ label: m.name, value: m.name, id: m.id })));
+    const { data: activeData } = await supabase.from('imaging_modalities').select('*').not('is_archived', 'eq', true).order('name');
+    if (activeData) {
+      setModalities(activeData.map(m => ({ label: m.name, value: m.name, id: m.id })));
+    }
+
+    const { data: archivedData } = await supabase.from('imaging_modalities').select('*').eq('is_archived', true).order('name');
+    if (archivedData) {
+      setArchivedModalities(archivedData.map(m => ({ label: m.name, value: m.name, id: m.id })));
     }
   };
 
@@ -177,11 +184,20 @@ export default function ImagingForm() {
     } else {
       toast.success('Modality archived');
       fetchModalities();
-      // Reset selected modality if it was the one archived
       const archivedMod = modalities.find(m => m.id === modId);
       if (archivedMod && formData.modality === archivedMod.value) {
         setFormData(prev => ({ ...prev, modality: '' }));
       }
+    }
+  };
+
+  const handleUnarchiveModality = async (modId) => {
+    const { error } = await supabase.from('imaging_modalities').update({ is_archived: false }).eq('id', modId);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Modality unarchived');
+      fetchModalities();
     }
   };
 
@@ -412,45 +428,86 @@ export default function ImagingForm() {
 
       {/* Manage Modalities Modal */}
       {isManageModalOpen && (() => {
-        const filteredModalities = modalities.filter(m => m.label.toLowerCase().includes(modalSearchQuery.toLowerCase()));
+        const currentList = modalTab === 'active' ? modalities : archivedModalities;
+        const filteredModalities = currentList.filter(m => m.label.toLowerCase().includes(modalSearchQuery.toLowerCase()));
         const totalPages = Math.ceil(filteredModalities.length / modalLimit) || 1;
         const paginatedModalities = filteredModalities.slice((modalPage - 1) * modalLimit, modalPage * modalLimit);
 
         return (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', width: '90%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '1.5rem', width: '90%', maxWidth: '420px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h3 style={{ margin: 0, fontSize: '1.125rem', color: 'var(--text-dark)' }}>Manage Modalities</h3>
                 <button onClick={() => setIsManageModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                   <X size={20} color="#64748b" />
                 </button>
               </div>
-              
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder="New Modality Name" 
-                  value={newModality}
-                  onChange={(e) => setNewModality(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddModality()}
-                />
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
-                  onClick={handleAddModality}
-                  style={{ padding: '0.5rem 1rem' }}
-                  disabled={!newModality.trim()}
+
+              {/* Modal Tabs */}
+              <div style={{ display: 'flex', borderBottom: '2px solid #f1f5f9', marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setModalTab('active'); setModalPage(1); }}
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem',
+                    border: 'none',
+                    borderBottom: modalTab === 'active' ? '2px solid var(--primary, #0d9488)' : '2px solid transparent',
+                    backgroundColor: 'transparent',
+                    fontWeight: modalTab === 'active' ? 600 : 400,
+                    color: modalTab === 'active' ? 'var(--primary, #0d9488)' : '#64748b',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
                 >
-                  Add
+                  Active ({modalities.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setModalTab('archived'); setModalPage(1); }}
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem',
+                    border: 'none',
+                    borderBottom: modalTab === 'archived' ? '2px solid var(--primary, #0d9488)' : '2px solid transparent',
+                    backgroundColor: 'transparent',
+                    fontWeight: modalTab === 'archived' ? 600 : 400,
+                    color: modalTab === 'archived' ? 'var(--primary, #0d9488)' : '#64748b',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Archived ({archivedModalities.length})
                 </button>
               </div>
+              
+              {modalTab === 'active' && (
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="New Modality Name" 
+                    value={newModality}
+                    onChange={(e) => setNewModality(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddModality()}
+                  />
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={handleAddModality}
+                    style={{ padding: '0.5rem 1rem' }}
+                    disabled={!newModality.trim()}
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                 <Search size={16} color="#94a3b8" />
                 <input 
                   type="text" 
-                  placeholder="Search modalities..." 
+                  placeholder={modalTab === 'active' ? "Search active modalities..." : "Search archived modalities..."}
                   value={modalSearchQuery}
                   onChange={(e) => {
                     setModalSearchQuery(e.target.value);
@@ -462,22 +519,35 @@ export default function ImagingForm() {
 
               <div style={{ overflowY: 'auto', flex: 1, border: '1px solid #e2e8f0', borderRadius: '4px' }}>
                 {paginatedModalities.length === 0 ? (
-                  <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>No modalities found</div>
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>
+                    {modalTab === 'active' ? 'No active modalities found' : 'No archived modalities found'}
+                  </div>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <tbody>
                       {paginatedModalities.map(m => (
                         <tr key={m.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                           <td style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem' }}>{m.label}</td>
-                          <td style={{ padding: '0.5rem 0.75rem', width: '40px', textAlign: 'center' }}>
-                            <button 
-                              type="button"
-                              onClick={() => handleArchiveModality(m.id)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', padding: '0.2rem' }}
-                              title="Archive"
-                            >
-                              <Archive size={16} />
-                            </button>
+                          <td style={{ padding: '0.5rem 0.75rem', width: modalTab === 'archived' ? '100px' : '40px', textAlign: 'right' }}>
+                            {modalTab === 'active' ? (
+                              <button 
+                                type="button"
+                                onClick={() => handleArchiveModality(m.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#f59e0b', padding: '0.2rem' }}
+                                title="Archive Modality"
+                              >
+                                <Archive size={16} />
+                              </button>
+                            ) : (
+                              <button 
+                                type="button"
+                                onClick={() => handleUnarchiveModality(m.id)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0d9488', padding: '0.2rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', fontWeight: 600 }}
+                                title="Unarchive Modality"
+                              >
+                                <RotateCcw size={14} /> Unarchive
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}

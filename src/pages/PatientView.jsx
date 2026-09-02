@@ -289,25 +289,25 @@ export default function PatientView() {
 
         {/* Phase 2: Implemented */}
         {activeTab === 'appointments' && (
-          <PatientAppointments patientId={id} />
+          <PatientAppointments patientId={id} patient={patient} />
         )}
         {activeTab === 'vitals' && (
-          <PatientVitals patientId={id} />
+          <PatientVitals patientId={id} patient={patient} />
         )}
         {activeTab === 'records' && (
-          <PatientRecords patientId={id} />
+          <PatientRecords patientId={id} patient={patient} />
         )}
         {activeTab === 'labs' && (
-          <PatientLabs patientId={id} />
+          <PatientLabs patientId={id} patient={patient} />
         )}
         {activeTab === 'prescriptions' && (
-          <PatientPrescriptions patientId={id} />
+          <PatientPrescriptions patientId={id} patient={patient} />
         )}
         {activeTab === 'documents' && (
-          <PatientDocuments patientId={id} />
+          <PatientDocuments patientId={id} patient={patient} />
         )}
         {activeTab === 'insurance' && (
-          <PatientInsurance patientId={id} />
+          <PatientInsurance patientId={id} patient={patient} />
         )}
 
       </div>

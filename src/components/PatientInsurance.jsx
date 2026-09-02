@@ -6,9 +6,10 @@ import { Plus, Edit, Trash2, ShieldCheck, CheckCircle, XCircle } from 'lucide-re
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
-export default function PatientInsurance({ patientId }) {
+export default function PatientInsurance({ patientId, patient }) {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [patientData, setPatientData] = useState(patient || null);
   
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -35,6 +36,16 @@ export default function PatientInsurance({ patientId }) {
     },
     { label: 'Status', key: 'status' }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchPolicies();
@@ -144,6 +155,7 @@ export default function PatientInsurance({ patientId }) {
             columns={printColumns} 
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            patient={patientData}
           />
           <Link 
             to={`/patients/${patientId}/insurance/add`} 

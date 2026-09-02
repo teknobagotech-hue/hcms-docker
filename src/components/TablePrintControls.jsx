@@ -2,17 +2,34 @@ import React, { useState } from 'react';
 import { Printer, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function TablePrintControls({ 
-  records = [], 
-  title, 
-  columns = [], 
+export default function TablePrintControls({
+  records = [],
+  title,
+  columns = [],
   dateField = 'created_at',
   searchTerm = '',
-  onSearchChange
+  onSearchChange,
+  patientName = '',
+  patient = null
 }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [localSearch, setLocalSearch] = useState(searchTerm || '');
+
+  const getFormattedPatientName = () => {
+    if (patientName) return patientName;
+    if (patient) {
+      if (typeof patient === 'string') return patient;
+      const lastName = patient.last_name || '';
+      const firstName = patient.first_name || '';
+      const middleName = patient.middle_name || '';
+      if (lastName && firstName) {
+        return `${lastName}, ${firstName} ${middleName}`.trim();
+      }
+      return `${firstName} ${lastName}`.trim();
+    }
+    return '';
+  };
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -49,7 +66,8 @@ export default function TablePrintControls({
     }
 
     const printWindow = window.open('', '_blank');
-    
+    const pName = getFormattedPatientName();
+
     let tableHtml = `
       <table style="width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed;">
         <thead>
@@ -61,9 +79,9 @@ export default function TablePrintControls({
           ${filteredRecords.map(r => `
             <tr>
               ${columns.map(c => {
-                const val = c.render ? c.render(r) : r[c.key] || '-';
-                return `<td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 8.5pt; vertical-align: top; word-break: break-word; overflow-wrap: break-word; white-space: normal;">${val}</td>`;
-              }).join('')}
+      const val = c.render ? c.render(r) : r[c.key] || '-';
+      return `<td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 8.5pt; vertical-align: top; word-break: break-word; overflow-wrap: break-word; white-space: normal;">${val}</td>`;
+    }).join('')}
             </tr>
           `).join('')}
         </tbody>
@@ -76,8 +94,10 @@ export default function TablePrintControls({
           <title>Print - ${title}</title>
           <style>
             body { font-family: system-ui, -apple-system, sans-serif; color: #333; padding: 20px; }
-            h1 { color: #1e293b; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+            h1 { color: #1e293b; font-size: 22px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+            .patient-banner { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 12px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border-left: 4px solid #0d9488; }
+            .meta-info { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
             th { word-break: break-word; overflow-wrap: break-word; white-space: normal; }
             td { word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
             @media print {
@@ -92,9 +112,12 @@ export default function TablePrintControls({
         </head>
         <body>
           <h1>${title}</h1>
-          <p>Date Printed: ${new Date().toLocaleDateString()}</p>
-          ${startDate || endDate ? `<p>Filtered Date: ${startDate || 'Any'} to ${endDate || 'Any'}</p>` : ''}
-          ${localSearch ? `<p>Search Query: "${localSearch}"</p>` : ''}
+          ${pName ? `<div class="patient-banner">Patient: <strong>${pName}</strong></div>` : ''}
+          <div class="meta-info">
+            <p style="margin: 2px 0;">Date Printed: ${new Date().toLocaleDateString()}</p>
+            ${startDate || endDate ? `<p style="margin: 2px 0;">Filtered Date: ${startDate || 'Any'} to ${endDate || 'Any'}</p>` : ''}
+            ${localSearch ? `<p style="margin: 2px 0;">Search Query: "${localSearch}"</p>` : ''}
+          </div>
           ${tableHtml}
           <div style="margin-top: 20px;">
             <button onclick="window.print()" style="padding: 10px 20px; background: #0f172a; color: white; border: none; cursor: pointer; border-radius: 4px;">Print Now</button>

@@ -8,9 +8,10 @@ import TablePrintControls from './TablePrintControls';
 import { printPrescription } from '../utils/printDocumentTemplates';
 import '../index.css';
 
-export default function PatientPrescriptions({ patientId }) {
+export default function PatientPrescriptions({ patientId, patient }) {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [patientData, setPatientData] = useState(patient || null);
 
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -25,6 +26,16 @@ export default function PatientPrescriptions({ patientId }) {
     { label: 'Doctor', render: (r) => r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-' },
     { label: 'Status', key: 'status' }
   ];
+
+  useEffect(() => {
+    if (patient) {
+      setPatientData(patient);
+    } else if (patientId) {
+      supabase.from('patients').select('*').eq('patient_id', patientId).single().then(({ data }) => {
+        if (data) setPatientData(data);
+      });
+    }
+  }, [patient, patientId]);
 
   useEffect(() => {
     fetchPrescriptions();
@@ -108,7 +119,7 @@ export default function PatientPrescriptions({ patientId }) {
           Prescriptions
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <TablePrintControls records={prescriptions} title="Prescriptions" columns={printColumns} dateField="prescription_date" />
+          <TablePrintControls records={prescriptions} title="Prescriptions" columns={printColumns} dateField="prescription_date" patient={patientData} />
           <Link to={`/pharmacy/prescriptions/add?patientId=${patientId}`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
             <Plus size={16} /> New Prescription
           </Link>
