@@ -198,7 +198,7 @@ export default function ImagingForm() {
 
   return (
     <div className="dashboard-scroll-area">
-      <div className="dashboard-container" style={{ maxWidth: '650px' }}>
+      <div className="dashboard-container" style={{ maxWidth: '900px' }}>
         {/* ... existing code above ... */}
         <div className="section-panel" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem' }}>
           <Link to={`/patients/view/${patient_id}?tab=labs&labCat=imaging`} className="icon-btn" style={{ padding: '0.5rem' }}>
