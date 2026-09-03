@@ -33,15 +33,15 @@ export function executePrint(htmlContent) {
     doc.write(htmlContent);
     doc.close();
 
-    try { doc.title = '.'; } catch (e) {}
-    try { iframe.contentWindow.history.replaceState(null, '', '.'); } catch (e) {}
+    try { doc.title = '.'; } catch (e) { }
+    try { iframe.contentWindow.history.replaceState(null, '', '.'); } catch (e) { }
 
     setTimeout(() => {
       try {
         if (iframe.contentWindow) {
-          try { iframe.contentWindow.document.title = '.'; } catch (e) {}
-          try { iframe.contentWindow.history.replaceState(null, '', '.'); } catch (e) {}
-          try { window.history.replaceState(null, '', '.'); } catch (e) {}
+          try { iframe.contentWindow.document.title = '.'; } catch (e) { }
+          try { iframe.contentWindow.history.replaceState(null, '', '.'); } catch (e) { }
+          try { window.history.replaceState(null, '', '.'); } catch (e) { }
 
           iframe.contentWindow.focus();
           iframe.contentWindow.print();
@@ -50,7 +50,7 @@ export function executePrint(htmlContent) {
         console.error(e);
       } finally {
         setTimeout(() => {
-          try { window.history.replaceState(null, '', currentPath); } catch (e) {}
+          try { window.history.replaceState(null, '', currentPath); } catch (e) { }
         }, 500);
       }
     }, 400);
@@ -60,14 +60,14 @@ export function executePrint(htmlContent) {
     printWindow.document.open();
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-    try { printWindow.history.replaceState(null, '', '.'); } catch (e) {}
-    try { window.history.replaceState(null, '', '.'); } catch (e) {}
+    try { printWindow.history.replaceState(null, '', '.'); } catch (e) { }
+    try { window.history.replaceState(null, '', '.'); } catch (e) { }
     printWindow.focus();
     setTimeout(() => {
-      try { printWindow.document.title = '.'; } catch (e) {}
+      try { printWindow.document.title = '.'; } catch (e) { }
       printWindow.print();
       setTimeout(() => {
-        try { window.history.replaceState(null, '', currentPath); } catch (e) {}
+        try { window.history.replaceState(null, '', currentPath); } catch (e) { }
       }, 500);
     }, 600);
   }
@@ -77,7 +77,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
   const patientName = customFields.patientName || (patient ? `${patient.first_name} ${patient.middle_name || ''} ${patient.last_name}`.replace(/\s+/g, ' ').trim() : '____________________');
   const patientAge = customFields.patientAge || (patient?.date_of_birth ? getAge(patient.date_of_birth) : '_____');
   const patientAddress = customFields.patientAddress || patient?.address || '__________________________________________________';
-  
+
   const issueDate = customFields.issueDate || (document?.issue_date ? new Date(document.issue_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }));
   const consultDate = customFields.consultDate || (document?.issue_date ? new Date(document.issue_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
 
@@ -139,7 +139,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
             max-width: 5.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0.65in 0.35in 0.4in 0.35in !important; 
+            padding: 0 0.35in 0.4in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
@@ -298,7 +298,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
             max-width: 5.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0.65in 0.35in 0.4in 0.35in !important; 
+            padding: 0 0.35in 0.4in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
@@ -395,19 +395,16 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
 }
 
 export function printPharmacyReceipt({ sale, items = [] }) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return alert('Please allow popups to print receipt.');
-
-  const customerName = sale.customer_id && sale.patients 
+  const customerName = sale.customer_id && sale.patients
     ? `${sale.patients.first_name || ''} ${sale.patients.last_name || ''}`.trim()
     : sale.customer_name || 'Walk-in Customer';
 
-  const dateStr = sale.withdrawal_date 
-    ? new Date(sale.withdrawal_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+  const dateStr = sale.withdrawal_date
+    ? new Date(sale.withdrawal_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const receiptNo = `REC-${String(sale.withdrawal_id).padStart(5, '0')}`;
-  
+
   let subtotal = 0;
   const itemRowsHtml = items.map((item, index) => {
     const itemName = item.inventory_items?.item_name || `Item #${item.item_id}`;
@@ -418,11 +415,11 @@ export function printPharmacyReceipt({ sale, items = [] }) {
 
     return `
       <tr>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${index + 1}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${itemName}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: center;">${qty}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right;">₱${price.toFixed(2)}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right; font-weight: 500;">₱${itemTotal.toFixed(2)}</td>
+        <td style="padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px;">${index + 1}</td>
+        <td style="padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px;">${itemName}</td>
+        <td style="padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: center;">${qty}</td>
+        <td style="padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: right;">₱${price.toFixed(2)}</td>
+        <td style="padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: right; font-weight: 500;">₱${itemTotal.toFixed(2)}</td>
       </tr>
     `;
   }).join('');
@@ -448,36 +445,74 @@ export function printPharmacyReceipt({ sale, items = [] }) {
       <title>Pharmacy Sales Receipt - ${receiptNo}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: white; margin: 0; padding: 24px; }
-        .receipt-card { max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header p { font-size: 12px; color: #64748b; margin: 2px 0; }
-        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 13px; }
-        .info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: #f0f0f0; margin: 0; padding: 15px 0; }
+        .print-container { 
+          width: 5.5in; 
+          max-width: 100%; 
+          min-height: 8.5in; 
+          box-sizing: border-box; 
+          margin: 0 auto; 
+          padding: 0 0.35in 0.4in 0.35in; 
+          position: relative; 
+          background: white; 
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+        }
+        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 12px; margin-top: 0; margin-bottom: 16px; }
+        .header h1 { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header p { font-size: 11.5px; color: #64748b; margin: 2px 0; }
+        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 12px; }
+        .info-item span { display: block; font-size: 10.5px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-item strong { color: #0f172a; font-weight: 600; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th { text-align: left; padding: 8px 4px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
-        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 14px; margin-bottom: 20px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #475569; }
-        .summary-row.total { font-size: 16px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        .items-table th { text-align: left; padding: 6px 4px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 12px; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: #475569; }
+        .summary-row.total { font-size: 15px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; }
         .badge-paid { background: #dcfce7; color: #166534; }
         .badge-unpaid { background: #fef3c7; color: #92400e; }
         .badge-partial { background: #e0f2fe; color: #075985; }
-        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 12px; }
         
         @media print {
-          @page { margin: 0; }
-          body { padding: 15mm; }
-          .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
+          @page { 
+            margin: 0; 
+            size: letter landscape; 
+          }
+          html, body { 
+            width: 11in; 
+            margin: 0; 
+            padding: 0; 
+            background: white; 
+            color: white !important; 
+            display: block; 
+          }
+          .print-container { 
+            position: relative;
+            left: 0;
+            top: 0;
+            width: 5.5in !important;
+            max-width: 5.5in !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 0.35in 0.4in 0.35in !important; 
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            box-sizing: border-box !important;
+            float: left;
+            color: black !important;
+          }
+          .print-container * {
+            color: black !important;
+          }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div class="receipt-card">
+      <div class="print-container">
         <div class="header">
           <h1>MedDesk Pharmacy</h1>
           <p><strong>Dr. Gladdays Casuga-Napigkit, MD, MBAHHCM</strong></p>
@@ -577,15 +612,12 @@ export function printPharmacyReceipt({ sale, items = [] }) {
 }
 
 export function printBillingReceipt({ bill }) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return alert('Please allow popups to print receipt.');
-
-  const patientName = bill.patients 
-    ? `${bill.patients.first_name || ''} ${bill.patients.last_name || ''}`.trim() 
+  const patientName = bill.patients
+    ? `${bill.patients.first_name || ''} ${bill.patients.last_name || ''}`.trim()
     : 'Patient';
 
-  const dateStr = bill.billing_date 
-    ? new Date(bill.billing_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+  const dateStr = bill.billing_date
+    ? new Date(bill.billing_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const billNo = `INV-${String(bill.billing_id).padStart(5, '0')}`;
@@ -690,13 +722,10 @@ export function printBillingReceipt({ bill }) {
 }
 
 export function printStockReceipt({ receipt, items = [] }) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return alert('Please allow popups to print receipt.');
-
   const supplierName = receipt.suppliers?.supplier_name || 'N/A';
   const refNo = receipt.reference_number || `SR-${String(receipt.receipt_id).padStart(5, '0')}`;
-  const dateStr = receipt.receipt_date 
-    ? new Date(receipt.receipt_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) 
+  const dateStr = receipt.receipt_date
+    ? new Date(receipt.receipt_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   let totalCost = 0;
@@ -712,13 +741,13 @@ export function printStockReceipt({ receipt, items = [] }) {
 
     return `
       <tr>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">${index + 1}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; font-weight: 500;">${itemName}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: center;">${qty}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right;">₱${unitCost.toFixed(2)}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right; font-weight: 500;">₱${lineTotal.toFixed(2)}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: center;">${batch}</td>
-        <td style="padding: 8px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; text-align: center;">${expiry}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11.5px;">${index + 1}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11.5px; font-weight: 500;">${itemName}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11.5px; text-align: center;">${qty}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11.5px; text-align: right;">₱${unitCost.toFixed(2)}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11.5px; text-align: right; font-weight: 500;">₱${lineTotal.toFixed(2)}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-align: center;">${batch}</td>
+        <td style="padding: 6px 3px; border-bottom: 1px solid #e2e8f0; font-size: 11px; text-align: center;">${expiry}</td>
       </tr>
     `;
   }).join('');
@@ -732,32 +761,70 @@ export function printStockReceipt({ receipt, items = [] }) {
       <title>Stock Receipt - ${refNo}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: white; margin: 0; padding: 24px; }
-        .receipt-card { max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header p { font-size: 12px; color: #64748b; margin: 2px 0; }
-        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 13px; }
-        .info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: #f0f0f0; margin: 0; padding: 15px 0; }
+        .print-container { 
+          width: 5.5in; 
+          max-width: 100%; 
+          min-height: 8.5in; 
+          box-sizing: border-box; 
+          margin: 0 auto; 
+          padding: 0 0.35in 0.4in 0.35in; 
+          position: relative; 
+          background: white; 
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+        }
+        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 12px; margin-top: 0; margin-bottom: 16px; }
+        .header h1 { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header p { font-size: 11.5px; color: #64748b; margin: 2px 0; }
+        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 12px; }
+        .info-item span { display: block; font-size: 10.5px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-item strong { color: #0f172a; font-weight: 600; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th { text-align: left; padding: 8px 4px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
-        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 14px; margin-bottom: 20px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #475569; }
-        .summary-row.total { font-size: 16px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
-        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        .items-table th { text-align: left; padding: 6px 3px; font-size: 10.5px; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 12px; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: #475569; }
+        .summary-row.total { font-size: 15px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 12px; }
         
         @media print {
-          @page { margin: 0; }
-          body { padding: 15mm; }
-          .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
+          @page { 
+            margin: 0; 
+            size: letter landscape; 
+          }
+          html, body { 
+            width: 11in; 
+            margin: 0; 
+            padding: 0; 
+            background: white; 
+            color: white !important; 
+            display: block; 
+          }
+          .print-container { 
+            position: relative;
+            left: 0;
+            top: 0;
+            width: 5.5in !important;
+            max-width: 5.5in !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 0.35in 0.4in 0.35in !important; 
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            box-sizing: border-box !important;
+            float: left;
+            color: black !important;
+          }
+          .print-container * {
+            color: black !important;
+          }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div class="receipt-card">
+      <div class="print-container">
         <div class="header">
           <h1>MedDesk Pharmacy & Inventory</h1>
           <p><strong>INVENTORY STOCK RECEIPT</strong></p>
@@ -821,6 +888,10 @@ export function printStockReceipt({ receipt, items = [] }) {
           <p style="margin: 0 0 4px 0; font-weight: 500;">MedDesk Inventory Management System</p>
         </div>
 
+        <div class="no-print" style="margin-top: 24px; text-align: center;">
+          <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+            Print Receipt
+          </button>
         </div>
       </div>
     </body>
@@ -831,24 +902,24 @@ export function printStockReceipt({ receipt, items = [] }) {
 }
 
 export function printPrescription({ patient, prescription, items = [], doctor = null }) {
-  const patientName = patient 
-    ? `${patient.last_name || ''}, ${patient.first_name || ''} ${patient.middle_name || ''}`.replace(/\s+/g, ' ').trim() 
+  const patientName = patient
+    ? `${patient.last_name || ''}, ${patient.first_name || ''} ${patient.middle_name || ''}`.replace(/\s+/g, ' ').trim()
     : '____________________';
   const patientAge = patient?.date_of_birth ? getAge(patient.date_of_birth) : '-';
   const patientGender = patient?.gender === 'Male' ? 'M' : patient?.gender === 'Female' ? 'F' : (patient?.gender || '-');
   const ageSex = `${patientAge}/${patientGender}`;
   const patientAddress = patient?.address || '__________________________________________________';
 
-  const dateStr = prescription?.prescription_date 
+  const dateStr = prescription?.prescription_date
     ? new Date(prescription.prescription_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   // Doctor Details (Fallback to default clinic doctor if specific fields missing)
-  const doctorHeaderName = doctor?.first_name 
-    ? `${doctor.first_name || ''} ${doctor.last_name || ''}${doctor.specialty ? ', MD' : ', MD'}`.trim().toUpperCase() 
+  const doctorHeaderName = doctor?.first_name
+    ? `${doctor.first_name || ''} ${doctor.last_name || ''}${doctor.specialty ? ', MD' : ', MD'}`.trim().toUpperCase()
     : 'GLADDAYS CASUGA-NAPIGKIT, MD, MBAHHCM, FPCP, FPCC, FPSVM';
-  const doctorSigName = doctor?.first_name 
-    ? `DR. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim().toUpperCase() 
+  const doctorSigName = doctor?.first_name
+    ? `DR. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim().toUpperCase()
     : 'DR. GLADDAYS CASUGA-NAPIGKIT';
   const doctorSpecialty = doctor?.specialty || 'Internist-Cardiologist-Vascular Specialist';
   const licNo = doctor?.license_number || doctor?.lic_no || '0110138';
@@ -945,7 +1016,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           min-height: 8.5in;
           box-sizing: border-box;
           margin: 0 auto;
-          padding: 0.4in 0.35in;
+          padding: 0 0.35in 0.4in 0.35in;
           position: relative;
           background: white;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -961,6 +1032,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
           font-weight: bold; 
           font-size: ${headerFontSize}; 
           letter-spacing: 0.3px; 
+          margin-top: 0;
           margin-bottom: 3px; 
           text-transform: uppercase; 
           color: #000;
@@ -1109,7 +1181,7 @@ export function printPrescription({ patient, prescription, items = [], doctor = 
             max-width: 5.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0.65in 0.35in 0.4in 0.35in !important; 
+            padding: 0 0.35in 0.4in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
