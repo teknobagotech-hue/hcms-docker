@@ -793,7 +793,10 @@ export default function RecordView() {
                 <a href={data.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', padding: '0.5rem 1rem', width: 'fit-content' }}>
                   <ExternalLink size={16} /> Open Full High-Res Attachment
                 </a>
-                {(String(data.file_url).match(/\.(jpeg|jpg|png|gif|webp)/i) || String(data.file_url).includes('firebasestorage.googleapis.com')) && (
+                {(String(data.file_url).match(/\.(jpeg|jpg|png|gif|webp)/i) || 
+                  String(data.file_url).includes('firebasestorage.googleapis.com') ||
+                  String(data.file_url).includes('r2.dev') ||
+                  String(data.file_url).includes('r2.cloudflarestorage.com')) && (
                   <div style={{ borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0.5rem' }}>
                     <img src={data.file_url} alt="Imaging Preview" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '0.25rem' }} onError={(e) => { e.target.style.display = 'none'; }} />
                   </div>
@@ -854,7 +857,10 @@ export default function RecordView() {
                         <ExternalLink size={16} /> Open Attached File
                       </a>
                     </div>
-                    {(String(value).match(/\.(jpeg|jpg|png|gif|webp)/i) || String(value).includes('firebasestorage.googleapis.com')) && (
+                    {(String(value).match(/\.(jpeg|jpg|png|gif|webp)/i) || 
+                      String(value).includes('firebasestorage.googleapis.com') ||
+                      String(value).includes('r2.dev') ||
+                      String(value).includes('r2.cloudflarestorage.com')) && (
                       <div style={{ marginTop: '0.5rem', maxWidth: '450px', maxHeight: '350px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', padding: '0.5rem' }}>
                         <img 
                           src={value} 

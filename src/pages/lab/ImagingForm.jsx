@@ -4,7 +4,7 @@ import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Save, Upload, FileText, Image as ImageIcon, X, CheckCircle2, Loader2, ExternalLink, Plus, Archive, Search, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import SearchableSelect from '../../components/SearchableSelect';
-import { uploadFileToFirebase, MAX_FILE_SIZE_BYTES } from '../../firebaseClient';
+import { uploadFileToR2, MAX_FILE_SIZE_BYTES } from '../../r2Client';
 import '../../index.css';
 
 export default function ImagingForm() {
@@ -89,7 +89,7 @@ export default function ImagingForm() {
     setUploadProgress(0);
 
     try {
-      const result = await uploadFileToFirebase(
+      const result = await uploadFileToR2(
         file,
         `imaging-reports/${patient_id}`,
         (progress) => setUploadProgress(progress)
@@ -103,12 +103,12 @@ export default function ImagingForm() {
         const comp = (result.uploadedSize / 1024 > 1024) 
           ? `${(result.uploadedSize / (1024 * 1024)).toFixed(2)} MB` 
           : `${Math.round(result.uploadedSize / 1024)} KB`;
-        toast.success(`Image compressed (${orig} MB → ${comp}) & saved to Firebase!`);
+        toast.success(`Image compressed (${orig} MB → ${comp}) & saved to Cloudflare R2!`);
       } else {
-        toast.success('File uploaded successfully to Firebase Storage!');
+        toast.success('File uploaded successfully to Cloudflare R2!');
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to upload file to Firebase');
+      toast.error(err.message || 'Failed to upload file to Cloudflare R2');
     } finally {
       setUploading(false);
     }
@@ -209,7 +209,9 @@ export default function ImagingForm() {
 
   const isImageFile = formData.file_url && (
     formData.file_url.match(/\.(jpeg|jpg|png|gif|webp)/i) || 
-    formData.file_url.includes('firebasestorage.googleapis.com')
+    formData.file_url.includes('firebasestorage.googleapis.com') ||
+    formData.file_url.includes('r2.dev') ||
+    formData.file_url.includes('r2.cloudflarestorage.com')
   );
 
   return (
@@ -311,7 +313,7 @@ export default function ImagingForm() {
                 }}>
                   <Loader2 size={32} className="spin" style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
                   <div style={{ fontWeight: 600, color: 'var(--text-dark)', marginBottom: '0.25rem' }}>
-                    Uploading to Firebase Storage... {uploadProgress}%
+                    Uploading to Cloudflare R2... {uploadProgress}%
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem' }}>
                     Compressing image & reducing file size
@@ -343,7 +345,7 @@ export default function ImagingForm() {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-dark)' }}>
-                      <CheckCircle2 size={16} style={{ color: '#10b981' }} /> File Attached (Firebase)
+                      <CheckCircle2 size={16} style={{ color: '#10b981' }} /> File Attached (Cloud Storage)
                     </div>
                     <a 
                       href={formData.file_url} 
