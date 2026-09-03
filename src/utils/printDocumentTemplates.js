@@ -91,6 +91,12 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
   const strenuousText = customFields.strenuousText || '';
   const financialAssistance = customFields.financialAssistance !== undefined ? customFields.financialAssistance : false;
 
+  const doctorSigName = customFields.doctorSigName || (customFields.doctor ? `DR. ${customFields.doctor.first_name || ''} ${customFields.doctor.last_name || ''}`.trim().toUpperCase() : 'DR. GLADDAYS CASUGA-NAPIGKIT');
+  const doctorSpecialty = customFields.doctorSpecialty || customFields.doctor?.specialty || 'Internist-Cardiologist-Vascular Specialist';
+  const licNo = customFields.licNo || customFields.doctor?.license_number || customFields.doctor?.lic_no || '0110138';
+  const ptrNo = customFields.ptrNo || customFields.doctor?.ptr_number || customFields.doctor?.ptr_no || '6226871';
+  const s2LicNo = customFields.s2LicNo || customFields.doctor?.s2_license || customFields.doctor?.s2_lic || 'S2015621FNP071328-K';
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -98,31 +104,39 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
       <title>.</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600;1,700&display=swap');
-        body { font-family: 'Times New Roman', Times, serif; color: black; background: #f0f0f0; margin: 0; padding: 20px 0; }
+        body { font-family: 'Times New Roman', Times, serif; color: black; background: #f0f0f0; margin: 0; padding: 15px 0; }
         .print-container {
-          width: 8.5in;
-          min-height: 11in;
+          width: 5.5in;
+          max-width: 100%;
+          height: 8.5in;
+          max-height: 8.5in;
           box-sizing: border-box;
           margin: 0 auto;
-          padding: 0.8in 0.6in;
+          padding: 0 0.35in 0.2in 0.35in;
           position: relative;
           background: white;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          overflow: hidden;
         }
-        .doc-header-name { text-align: center; font-family: 'Playfair Display', 'Times New Roman', serif; font-style: italic; font-size: 21px; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 4px; text-transform: uppercase; }
-        .doc-specialty { text-align: center; font-size: 11px; margin-bottom: 12px; line-height: 1.3; }
-        .affiliations { display: flex; justify-content: space-between; font-size: 11px; border-bottom: 3px double black; padding-bottom: 8px; margin-bottom: 25px; line-height: 1.35; }
-        .doc-title { text-align: center; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 36px; margin: 25px 0 15px 0; font-weight: 600; }
-        .date-row { text-align: right; font-size: 15px; font-style: italic; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
-        .salutation { font-size: 16px; font-style: italic; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
-        .cert-body { font-size: 16px; font-style: italic; line-height: 2.2; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
+        .doc-header-name { text-align: center; font-family: 'Playfair Display', 'Times New Roman', serif; font-style: italic; font-size: 16px; font-weight: bold; letter-spacing: 0.3px; margin-top: 0; margin-bottom: 2px; text-transform: uppercase; line-height: 1.2; }
+        .doc-specialty { text-align: center; font-size: 10px; margin-bottom: 5px; line-height: 1.25; }
+        .affiliations { display: flex; justify-content: space-between; font-size: 10px; border-bottom: 3px double black; padding-bottom: 4px; margin-bottom: 8px; line-height: 1.25; }
+        .doc-title { text-align: center; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-style: italic; font-size: 24px; margin: 6px 0 4px 0; font-weight: normal; }
+        .date-row { text-align: right; font-size: 13px; font-style: italic; margin-bottom: 5px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .salutation { font-size: 13.5px; font-style: italic; margin-bottom: 5px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .cert-body { font-size: 13.5px; font-style: italic; line-height: 1.45; margin-bottom: 6px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
         .underline-text { font-style: italic; font-weight: bold; border-bottom: 1px solid black; padding: 0 4px; display: inline-block; text-align: center; }
-        .section-label { font-size: 16px; font-style: italic; font-weight: bold; margin-top: 15px; margin-bottom: 6px; font-family: 'Playfair Display', serif; }
-        .content-box { font-size: 15px; min-height: 45px; line-height: 1.5; white-space: pre-wrap; margin-bottom: 15px; font-family: 'Times New Roman', serif; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-        .checklist { margin: 20px 0 25px 0; font-size: 15px; font-style: italic; line-height: 2.0; font-family: 'Playfair Display', serif; }
-        .chk-box { display: inline-block; width: 35px; text-align: left; font-weight: bold; font-style: normal; }
-        .disclaimer { font-size: 10px; font-style: italic; margin-top: 25px; margin-bottom: 30px; line-height: 1.3; font-family: 'Times New Roman', serif; }
-        .signature-block { text-align: right; float: right; margin-top: 20px; font-size: 11px; line-height: 1.3; font-family: Arial, sans-serif; width: 320px; }
+        .section-label { font-size: 13px; font-style: italic; font-weight: normal; margin-top: 5px; margin-bottom: 2px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .content-box { font-size: 12.5px; min-height: 16px; line-height: 1.3; white-space: pre-wrap; margin-bottom: 5px; font-family: 'Times New Roman', serif; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+        .checklist { margin: 5px 0 6px 0; font-size: 12px; font-style: italic; line-height: 1.4; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .chk-box { display: inline-block; width: 28px; text-align: left; font-weight: bold; font-style: normal; }
+        .disclaimer { font-size: 8.5px; font-style: italic; margin-top: 5px; margin-bottom: 5px; line-height: 1.2; font-family: 'Times New Roman', serif; color: #333; }
+        .signature-block { float: right; text-align: left; margin-top: 6px; margin-bottom: 2px; font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.25; width: auto; max-width: 250px; color: #000; }
+        .sig-line { border-bottom: 1px solid #000; margin-bottom: 5px; width: 100%; height: 16px; }
+        .doc-sig-name { font-weight: bold; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; }
+        .doc-sig-sub { font-size: 9.5px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; }
+        .footer-quote { clear: both; text-align: center; margin-top: 6px; font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px; color: #000; }
+        .quote-ref { text-decoration: underline; }
         .clear { clear: both; }
 
         @media print {
@@ -130,21 +144,33 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
             margin: 0; 
             size: letter landscape; 
           }
-          html, body { width: 11in; margin: 0; padding: 0; background: white; display: block; }
+          html, body { 
+            width: 11in; 
+            height: 8.5in;
+            margin: 0; 
+            padding: 0; 
+            background: white; 
+            display: block; 
+          }
           .print-container { 
             position: relative;
             left: 0;
             top: 0;
             width: 5.5in !important;
             max-width: 5.5in !important;
+            height: 8.5in !important;
+            max-height: 8.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0 0.35in 0.4in 0.35in !important; 
+            padding: 0 0.35in 0.2in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
             box-sizing: border-box !important;
             float: left;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
           }
           .no-print { display: none !important; }
         }
@@ -179,7 +205,7 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
           </div>
         </div>
 
-        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 32px; font-style: italic; font-weight: normal;">Medical Certificate</div>
+        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 24px; font-style: italic; font-weight: normal; margin: 6px 0 4px 0;">Medical Certificate</div>
 
         <div class="date-row" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
           Date: <span class="underline-text" style="min-width: 140px; font-weight: normal;">${issueDate}</span>
@@ -194,10 +220,10 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
         </div>
 
         <div class="section-label" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-weight: normal;">Impression/Diagnosis:</div>
-        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none;">${diagnosis || '&nbsp;'}</div>
+        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none; min-height: 16px; margin-bottom: 5px;">${diagnosis || '&nbsp;'}</div>
 
         <div class="section-label" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-weight: normal;">Remarks/ Recommendations:</div>
-        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none;">${remarks || '&nbsp;'}</div>
+        <div class="content-box" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; border-bottom: none; min-height: 16px; margin-bottom: 5px;">${remarks || '&nbsp;'}</div>
 
         <div class="checklist" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
           <div><span class="chk-box">${advisedRest ? '✓' : '___'}</span> Advised rest for <span class="underline-text" style="min-width: 80px; font-weight: normal;">${restDays || '________'}</span> days.</div>
@@ -206,22 +232,27 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
           <div><span class="chk-box">${financialAssistance ? '✓' : '___'}</span> For Financial/ Medical assistance.</div>
         </div>
 
-        <div class="disclaimer" style="font-size: 9px; color: #333;">
+        <div class="disclaimer" style="font-size: 8.5px; color: #333; margin-top: 5px; margin-bottom: 5px;">
           The certificate is being issued upon the request of the above-mentioned name for whatever purpose may serve best (excluding legal matters).
         </div>
 
-        <div class="signature-block" style="float: right; width: 320px; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; text-align: center;">
-          <div>DR. GLADDAYS CASUGA-NAPIGKIT</div>
-          <div>Internist-Cardiologist-Vascular</div>
-          <div style="text-align: left; padding-left: 20px;">Specialist</div>
-          <div style="padding-left: 40px;">
-            Lic #: 0110138<br/>
-            PTR #: 6226871
+        <div style="clear: both; width: 100%;">
+          <div class="signature-block">
+            <div class="sig-line"></div>
+            <div class="doc-sig-name">${doctorSigName}</div>
+            <div class="doc-sig-sub">${doctorSpecialty}</div>
+            <div>Lic #: ${licNo}</div>
+            <div>PTR #: ${ptrNo}</div>
+            <div>S2 Lic #: ${s2LicNo}</div>
           </div>
+          <div class="clear"></div>
         </div>
-        <div class="clear"></div>
 
-        <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <div class="footer-quote">
+          "A merry heart doeth good like a medicine." <span class="quote-ref">Proverbs</span> 17:22
+        </div>
+
+        <div class="no-print" style="margin-top: 20px; text-align: center;">
           <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">
             Print Medical Certificate
           </button>
@@ -235,9 +266,6 @@ export function printMedicalCertificate({ patient, document, customFields = {} }
 }
 
 export function printReferralLetter({ patient, document, customFields = {} }) {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return alert('Please allow popups to print documents.');
-
   const patientName = customFields.patientName || (patient ? `${patient.first_name} ${patient.middle_name || ''} ${patient.last_name}`.replace(/\s+/g, ' ').trim() : '_________________________________________');
   const issueDate = customFields.issueDate || (document?.issue_date ? new Date(document.issue_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }));
   const referredToDoctor = customFields.referredToDoctor || document?.referred_to_doctor || '_______________________';
@@ -246,6 +274,12 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
   const complaints = customFields.complaints || '_________________________________________________';
   const diagnosis = customFields.diagnosis !== undefined ? customFields.diagnosis : (document?.diagnosis_impression || '_________________________________________________');
 
+  const doctorSigName = customFields.doctorSigName || (customFields.doctor ? `DR. ${customFields.doctor.first_name || ''} ${customFields.doctor.last_name || ''}`.trim().toUpperCase() : 'DR. GLADDAYS CASUGA-NAPIGKIT');
+  const doctorSpecialty = customFields.doctorSpecialty || customFields.doctor?.specialty || 'Internist-Cardiologist-Vascular Specialist';
+  const licNo = customFields.licNo || customFields.doctor?.license_number || customFields.doctor?.lic_no || '0110138';
+  const ptrNo = customFields.ptrNo || customFields.doctor?.ptr_number || customFields.doctor?.ptr_no || '6226871';
+  const s2LicNo = customFields.s2LicNo || customFields.doctor?.s2_license || customFields.doctor?.s2_lic || 'S2015621FNP071328-K';
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -253,28 +287,35 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
       <title>.</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600;1,700&display=swap');
-        body { font-family: 'Times New Roman', Times, serif; color: black; background: #f0f0f0; margin: 0; padding: 20px 0; }
+        body { font-family: 'Times New Roman', Times, serif; color: black; background: #f0f0f0; margin: 0; padding: 15px 0; }
         .print-container {
-          width: 8.5in;
-          min-height: 11in;
+          width: 5.5in;
+          max-width: 100%;
+          height: 8.5in;
+          max-height: 8.5in;
           box-sizing: border-box;
           margin: 0 auto;
-          padding: 0.8in 0.6in;
+          padding: 0 0.35in 0.2in 0.35in;
           position: relative;
           background: white;
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          overflow: hidden;
         }
-        .doc-header-name { text-align: center; font-family: 'Playfair Display', 'Times New Roman', serif; font-style: italic; font-size: 21px; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 4px; text-transform: uppercase; }
-        .doc-specialty { text-align: center; font-size: 11px; margin-bottom: 12px; line-height: 1.3; }
-        .affiliations { display: flex; justify-content: space-between; font-size: 11px; border-bottom: 3px double black; padding-bottom: 8px; margin-bottom: 25px; line-height: 1.35; }
-        .doc-title { text-align: center; font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 36px; margin: 25px 0 20px 0; font-weight: 600; }
-        .date-row { text-align: right; font-size: 15px; font-style: italic; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
-        .to-dr { font-size: 16px; font-style: italic; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
-        .ref-body { font-size: 16px; font-style: italic; line-height: 2.2; margin-bottom: 30px; font-family: 'Playfair Display', serif; }
+        .doc-header-name { text-align: center; font-family: 'Playfair Display', 'Times New Roman', serif; font-style: italic; font-size: 16px; font-weight: bold; letter-spacing: 0.3px; margin-top: 0; margin-bottom: 2px; text-transform: uppercase; line-height: 1.2; }
+        .doc-specialty { text-align: center; font-size: 10px; margin-bottom: 5px; line-height: 1.25; }
+        .affiliations { display: flex; justify-content: space-between; font-size: 10px; border-bottom: 3px double black; padding-bottom: 4px; margin-bottom: 8px; line-height: 1.25; }
+        .doc-title { text-align: center; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-style: italic; font-size: 24px; margin: 6px 0 4px 0; font-weight: normal; }
+        .date-row { text-align: right; font-size: 13px; font-style: italic; margin-bottom: 5px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .to-dr { font-size: 13.5px; font-style: italic; margin-bottom: 5px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .ref-body { font-size: 13.5px; font-style: italic; line-height: 1.45; margin-bottom: 8px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
         .underline-text { font-style: italic; font-weight: bold; border-bottom: 1px solid black; padding: 0 4px; display: inline-block; text-align: center; }
-        .closing { font-size: 16px; font-style: italic; margin-top: 25px; font-family: 'Playfair Display', serif; }
-        .signature-block { text-align: right; float: right; margin-top: 20px; font-size: 11px; line-height: 1.3; font-family: Arial, sans-serif; width: 320px; }
-        .quote-footer { text-align: center; margin-top: 80px; font-size: 14px; font-style: italic; font-family: 'Playfair Display', serif; }
+        .closing { font-size: 13.5px; font-style: italic; margin-top: 6px; font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; }
+        .signature-block { float: right; text-align: left; margin-top: 8px; margin-bottom: 2px; font-family: Arial, Helvetica, sans-serif; font-size: 10px; line-height: 1.25; width: auto; max-width: 250px; color: #000; }
+        .sig-line { border-bottom: 1px solid #000; margin-bottom: 5px; width: 100%; height: 16px; }
+        .doc-sig-name { font-weight: bold; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.2px; white-space: nowrap; }
+        .doc-sig-sub { font-size: 9.5px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; }
+        .footer-quote { clear: both; text-align: center; margin-top: 8px; font-family: 'Playfair Display', serif; font-style: italic; font-size: 11px; color: #000; }
+        .quote-ref { text-decoration: underline; }
         .clear { clear: both; }
 
         @media print {
@@ -284,6 +325,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
           }
           html, body { 
             width: 11in; 
+            height: 8.5in;
             margin: 0; 
             padding: 0; 
             background: white; 
@@ -296,15 +338,19 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
             top: 0;
             width: 5.5in !important;
             max-width: 5.5in !important;
+            height: 8.5in !important;
+            max-height: 8.5in !important;
             min-height: auto !important;
             margin: 0 !important;
-            padding: 0 0.35in 0.4in 0.35in !important; 
+            padding: 0 0.35in 0.2in 0.35in !important; 
             border: none !important;
             box-shadow: none !important;
             transform: none !important;
             box-sizing: border-box !important;
             float: left;
-            color: black !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            overflow: hidden !important;
           }
           .print-container * {
             color: black !important;
@@ -342,7 +388,7 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
           </div>
         </div>
 
-        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 32px; font-style: italic; font-weight: normal;">Referral Letter</div>
+        <div class="doc-title" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 24px; font-style: italic; font-weight: normal; margin: 6px 0 4px 0;">Referral Letter</div>
 
         <div class="date-row" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive;">
           Date: <span class="underline-text" style="min-width: 140px; font-weight: normal;">${issueDate}</span>
@@ -366,22 +412,23 @@ export function printReferralLetter({ patient, document, customFields = {} }) {
           Thank you very much.
         </div>
 
-        <div class="signature-block" style="float: right; width: 320px; margin-top: 40px; font-family: Arial, sans-serif; font-size: 11px; text-align: center;">
-          <div>DR. GLADDAYS CASUGA-NAPIGKIT</div>
-          <div>Internist-Cardiologist-Vascular</div>
-          <div style="text-align: left; padding-left: 20px;">Specialist</div>
-          <div style="padding-left: 40px;">
-            Lic #: 0110138<br/>
-            PTR #: 6226871
+        <div style="clear: both; width: 100%;">
+          <div class="signature-block">
+            <div class="sig-line"></div>
+            <div class="doc-sig-name">${doctorSigName}</div>
+            <div class="doc-sig-sub">${doctorSpecialty}</div>
+            <div>Lic #: ${licNo}</div>
+            <div>PTR #: ${ptrNo}</div>
+            <div>S2 Lic #: ${s2LicNo}</div>
           </div>
-        </div>
-        <div class="clear"></div>
-
-        <div class="quote-footer" style="font-family: 'Monotype Corsiva', 'Apple Chancery', cursive; font-size: 14px;">
-          “A merry heart doeth good like a medicine.” <span style="border-bottom: 1px solid red; padding-bottom: 1px;">Proverbs</span> 17:22
+          <div class="clear"></div>
         </div>
 
-        <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <div class="footer-quote">
+          "A merry heart doeth good like a medicine." <span class="quote-ref">Proverbs</span> 17:22
+        </div>
+
+        <div class="no-print" style="margin-top: 20px; text-align: center;">
           <button onclick="window.print()" style="padding: 10px 24px; background-color: #0d9488; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">
             Print Referral Letter
           </button>
