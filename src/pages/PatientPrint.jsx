@@ -406,23 +406,25 @@ export default function PatientPrint() {
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '20%' }}>DATE</th>
-                <th style={{ width: '16%' }}>BP</th>
-                <th style={{ width: '16%' }}>PULSE</th>
-                <th style={{ width: '16%' }}>SPO2</th>
-                <th style={{ width: '16%' }}>TEMP</th>
-                <th style={{ width: '16%' }}>WEIGHT</th>
+                <th style={{ width: '16%' }}>DATE</th>
+                <th style={{ width: '14%' }}>HEIGHT</th>
+                <th style={{ width: '14%' }}>WEIGHT</th>
+                <th style={{ width: '14%' }}>BP</th>
+                <th style={{ width: '14%' }}>PULSE</th>
+                <th style={{ width: '14%' }}>SPO2</th>
+                <th style={{ width: '14%' }}>TEMP</th>
               </tr>
             </thead>
             <tbody>
               {vitals.map(v => (
                 <tr key={v.vital_id}>
                   <td>{new Date(v.record_date).toLocaleDateString()}</td>
+                  <td>{v.height_cm ? `${v.height_cm} cm` : '-'}</td>
+                  <td>{v.weight_kg ? `${v.weight_kg} kg` : '-'}</td>
                   <td>{v.bp || '-'}</td>
                   <td>{v.pr || '-'}</td>
                   <td>{v.spo2 || '-'}</td>
-                  <td>{v.temperature_c || '-'}</td>
-                  <td>{v.weight_kg || '-'}</td>
+                  <td>{v.temperature_c ? `${v.temperature_c} °C` : '-'}</td>
                 </tr>
               ))}
             </tbody>

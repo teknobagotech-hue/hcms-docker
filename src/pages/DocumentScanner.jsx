@@ -29,6 +29,9 @@ export default function DocumentScanner() {
     handleConsultationChange,
     addConsultation,
     removeConsultation,
+    handleVitalSignChange,
+    addVitalSign,
+    removeVitalSign,
     handleSave
   } = useScan();
 
@@ -394,34 +397,127 @@ export default function DocumentScanner() {
 
                 {formData.vitalSigns.length > 0 && (
                   <div className="glass-card">
-                    <div className="card-header" style={{ marginBottom: '1.5rem' }}>
+                    <div className="card-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h3 className="card-title" style={{ fontSize: '1.125rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Activity size={20} /> Vital Signs ({formData.vitalSigns.length})
                       </h3>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={addVitalSign}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                      >
+                        <Plus size={16} /> Add Row
+                      </button>
                     </div>
-                    <div className="table-container">
+                    <div className="table-container" style={{ overflowX: 'auto' }}>
                       <table className="premium-table">
                         <thead>
                           <tr>
                             <th>Date</th>
                             <th>Age</th>
+                            <th>Height</th>
                             <th>Weight</th>
                             <th>BP</th>
                             <th>SpO2</th>
                             <th>PR</th>
                             <th>Temp</th>
+                            <th style={{ textAlign: 'center', width: '50px' }}>Action</th>
                           </tr>
                         </thead>
                         <tbody>
                           {formData.vitalSigns.map((v, idx) => (
                             <tr key={idx}>
-                              <td>{v.date}</td>
-                              <td>{v.age}</td>
-                              <td>{v.weight}</td>
-                              <td>{v.bp}</td>
-                              <td>{v.spo2}</td>
-                              <td>{v.pr}</td>
-                              <td>{v.temperature}</td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.date || ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'date', e.target.value)}
+                                  placeholder="YYYY-MM-DD"
+                                  style={{ minWidth: '105px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.age ?? ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'age', e.target.value)}
+                                  placeholder="Age"
+                                  style={{ minWidth: '55px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.height || v.height_cm || ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'height', e.target.value)}
+                                  placeholder="e.g. 5'3 / 160"
+                                  style={{ minWidth: '85px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.weight || v.weight_kg || ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'weight', e.target.value)}
+                                  placeholder="kg"
+                                  style={{ minWidth: '70px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.bp || ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'bp', e.target.value)}
+                                  placeholder="120/80"
+                                  style={{ minWidth: '85px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.spo2 ?? ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'spo2', e.target.value)}
+                                  placeholder="%"
+                                  style={{ minWidth: '60px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.pr ?? ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'pr', e.target.value)}
+                                  placeholder="bpm"
+                                  style={{ minWidth: '60px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  value={v.temperature || v.temperature_c || ''}
+                                  onChange={(e) => handleVitalSignChange(idx, 'temperature', e.target.value)}
+                                  placeholder="°C"
+                                  style={{ minWidth: '65px', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="icon-btn delete"
+                                  onClick={() => removeVitalSign(idx)}
+                                  title="Remove Vital Record"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>

@@ -46,6 +46,44 @@ export const parseNumeric = (val) => {
   return isNaN(num) ? null : num;
 };
 
+export const parseHeightToCm = (val) => {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return isNaN(val) ? null : val;
+  const str = String(val).trim();
+  if (!str) return null;
+
+  // Check for feet & inches like 5'3, 5'3", 5’3, 5 ft 3 in, 5ft 3in, 5'
+  const ftInMatch = str.match(/^(\d+)\s*(?:'|’|ft\.?|feet)\s*(\d*(?:\.\d+)?)\s*(?:\"|”|in\.?|inches)?$/i);
+  if (ftInMatch) {
+    const feet = parseFloat(ftInMatch[1]) || 0;
+    const inches = parseFloat(ftInMatch[2]) || 0;
+    const cm = (feet * 12 + inches) * 2.54;
+    return Math.round(cm * 10) / 10;
+  }
+
+  // Check for meters like 1.65m or 1.65 m
+  const meterMatch = str.match(/^(\d+\.\d+)\s*m(?:eters?)?$/i);
+  if (meterMatch) {
+    const m = parseFloat(meterMatch[1]);
+    return Math.round(m * 100 * 10) / 10;
+  }
+
+  // Check for cm like 165cm or 165 cm
+  const cmMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:cm)?$/i);
+  if (cmMatch) {
+    const valNum = parseFloat(cmMatch[1]);
+    if (valNum > 0 && valNum < 2.5) {
+      return Math.round(valNum * 100 * 10) / 10;
+    }
+    return Math.round(valNum * 10) / 10;
+  }
+
+  // General fallback
+  const cleaned = str.replace(/,/g, '.').replace(/[^0-9.-]/g, '');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? null : num;
+};
+
 const initialFormData = {
   patient: { 
     firstName: '', lastName: '', address: '', dateOfBirth: '', gender: '', contactNumber: '',
@@ -179,7 +217,10 @@ export function ScanProvider({ children }) {
           venousDuplexScan: extractedData.imagingReports?.venousDuplexScan || [],
           xrayReports: extractedData.imagingReports?.xrayReports || []
         },
-        vitalSigns: extractedData.vitalSigns || [],
+        vitalSigns: (extractedData.vitalSigns || []).map(v => ({
+          ...v,
+          height: v.height || extractedData.patient?.height || ''
+        })),
         labs: {
           cbc: extractedData.labs?.cbc || [],
           chemistry: extractedData.labs?.chemistry || [],
@@ -263,6 +304,40 @@ export function ScanProvider({ children }) {
     setFormData(prev => ({
       ...prev,
       consultations: prev.consultations.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleVitalSignChange = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.vitalSigns];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, vitalSigns: updated };
+    });
+  };
+
+  const addVitalSign = () => {
+    setFormData(prev => ({
+      ...prev,
+      vitalSigns: [
+        ...prev.vitalSigns,
+        {
+          date: new Date().toISOString().split('T')[0],
+          age: '',
+          height: prev.patient?.height || '',
+          weight: '',
+          bp: '',
+          spo2: '',
+          pr: '',
+          temperature: ''
+        }
+      ]
+    }));
+  };
+
+  const removeVitalSign = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      vitalSigns: prev.vitalSigns.filter((_, i) => i !== index)
     }));
   };
 
@@ -495,18 +570,33 @@ export function ScanProvider({ children }) {
 
       // 5. Insert Vital Signs
       if (formData.vitalSigns.length > 0) {
-        const vitalInserts = formData.vitalSigns.map(v => ({
-          patient_id: patientId,
-          record_date: parseDateToISO(v.date) || new Date().toISOString().split('T')[0],
-          age: parseNumeric(v.age),
-          weight_kg: parseNumeric(v.weight),
-          bp: v.bp || '',
-          spo2: parseNumeric(v.spo2),
-          pr: parseNumeric(v.pr),
-          temperature_c: parseNumeric(v.temperature)
-        }));
-        const { error: vitalError } = await supabase.from('vital_signs').insert(vitalInserts);
-        if (vitalError) throw vitalError;
+        const vitalInserts = formData.vitalSigns.map(v => {
+          const payload = {
+            patient_id: patientId,
+            record_date: parseDateToISO(v.date) || new Date().toISOString().split('T')[0],
+            age: parseNumeric(v.age),
+            weight_kg: parseNumeric(v.weight || v.weight_kg),
+            bp: v.bp || '',
+            spo2: parseNumeric(v.spo2),
+            pr: parseNumeric(v.pr),
+            temperature_c: parseNumeric(v.temperature || v.temperature_c)
+          };
+          const parsedH = parseHeightToCm(v.height || v.height_cm);
+          if (parsedH !== null) {
+            payload.height_cm = parsedH;
+          }
+          return payload;
+        });
+
+        let { error: vitalError } = await supabase.from('vital_signs').insert(vitalInserts);
+        if (vitalError && vitalError.message && (vitalError.message.includes('height_cm') || vitalError.message.includes('column'))) {
+          console.warn('vital_signs insert with height_cm failed, attempting fallback without height_cm:', vitalError.message);
+          const fallbackInserts = vitalInserts.map(({ height_cm, ...rest }) => rest);
+          const { error: fallbackError } = await supabase.from('vital_signs').insert(fallbackInserts);
+          if (fallbackError) throw fallbackError;
+        } else if (vitalError) {
+          throw vitalError;
+        }
       }
 
       // 6. Insert Labs (CBC, Chemistry, Serology, Urinalysis)
@@ -644,6 +734,9 @@ export function ScanProvider({ children }) {
       handleConsultationChange,
       addConsultation,
       removeConsultation,
+      handleVitalSignChange,
+      addVitalSign,
+      removeVitalSign,
       handleSave
     }}>
       {children}

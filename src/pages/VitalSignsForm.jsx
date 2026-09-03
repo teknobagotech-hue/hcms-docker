@@ -13,6 +13,7 @@ export default function VitalSignsForm() {
   const [formData, setFormData] = useState({
     record_date: '',
     age: '',
+    height_cm: '',
     weight_kg: '',
     bp: '',
     spo2: '',
@@ -46,6 +47,7 @@ export default function VitalSignsForm() {
       setFormData({
         record_date: data.record_date || '',
         age: data.age || '',
+        height_cm: data.height_cm || '',
         weight_kg: data.weight_kg || '',
         bp: data.bp || '',
         spo2: data.spo2 || '',
@@ -65,7 +67,7 @@ export default function VitalSignsForm() {
       finalValue = parseInt(value, 10);
       if (isNaN(finalValue)) finalValue = '';
     }
-    if (['weight_kg', 'spo2', 'temperature_c'].includes(name) && value !== '') {
+    if (['height_cm', 'weight_kg', 'spo2', 'temperature_c'].includes(name) && value !== '') {
       finalValue = parseFloat(value);
       if (isNaN(finalValue)) finalValue = '';
     }
@@ -83,7 +85,7 @@ export default function VitalSignsForm() {
     };
     
     // Nullify empty numeric fields
-    ['age', 'weight_kg', 'spo2', 'pr', 'temperature_c'].forEach(field => {
+    ['age', 'height_cm', 'weight_kg', 'spo2', 'pr', 'temperature_c'].forEach(field => {
       if (dataToSubmit[field] === '') dataToSubmit[field] = null;
     });
 
@@ -135,6 +137,11 @@ export default function VitalSignsForm() {
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label">Patient Age (at recording)</label>
               <input type="number" name="age" className="form-input" style={{ paddingLeft: '1rem' }} value={formData.age} onChange={handleChange} />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Height (cm)</label>
+              <input type="number" step="0.1" name="height_cm" className="form-input" placeholder="e.g. 165" style={{ paddingLeft: '1rem' }} value={formData.height_cm} onChange={handleChange} />
             </div>
 
             <div className="form-group" style={{ margin: 0 }}>

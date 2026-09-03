@@ -172,6 +172,7 @@ CREATE TABLE public.vital_signs (
   patient_id integer NOT NULL REFERENCES public.patients(patient_id),
   record_date date DEFAULT CURRENT_DATE,
   age integer,
+  height_cm numeric,
   weight_kg numeric,
   bp character varying,
   spo2 numeric,

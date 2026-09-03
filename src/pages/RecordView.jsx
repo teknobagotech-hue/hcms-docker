@@ -11,6 +11,7 @@ import {
   Thermometer, 
   Wind, 
   Scale, 
+  Ruler,
   Edit, 
   User, 
   HeartPulse, 
@@ -268,13 +269,39 @@ export default function RecordView() {
     const prStatus = getPrStatus(data.pr);
     const tempStatus = getTempStatus(data.temperature_c);
 
+    const formatHeight = (cm) => {
+      if (!cm) return null;
+      const totalInches = cm / 2.54;
+      const feet = Math.floor(totalInches / 12);
+      const inches = Math.round(totalInches % 12);
+      return `${feet}'${inches}"`;
+    };
+
+    let bmi = null;
+    if (data.height_cm && data.weight_kg) {
+      const hM = data.height_cm / 100;
+      bmi = (data.weight_kg / (hM * hM)).toFixed(1);
+    }
+
     const metrics = [
       { label: 'Blood Pressure', value: data.bp || '-', unit: 'mmHg', icon: <Heart size={20} color="#0d9488" />, status: bpStatus },
       { label: 'Pulse Rate', value: data.pr ? `${data.pr}` : '-', unit: 'bpm', icon: <Activity size={20} color="#0d9488" />, status: prStatus },
       { label: 'SpO2 Level', value: data.spo2 ? `${data.spo2}` : '-', unit: '%', icon: <Wind size={20} color="#0d9488" />, status: spo2Status },
       { label: 'Temperature', value: data.temperature_c ? `${data.temperature_c}` : '-', unit: '°C', subValue: data.temperature_c ? `${(data.temperature_c * 9/5 + 32).toFixed(1)} °F` : null, icon: <Thermometer size={20} color="#0d9488" />, status: tempStatus },
+      { label: 'Height', value: data.height_cm ? `${data.height_cm}` : '-', unit: 'cm', subValue: data.height_cm ? formatHeight(data.height_cm) : null, icon: <Ruler size={20} color="#0d9488" />, status: null },
       { label: 'Weight', value: data.weight_kg ? `${data.weight_kg}` : '-', unit: 'kg', subValue: data.weight_kg ? `${(data.weight_kg * 2.20462).toFixed(1)} lbs` : null, icon: <Scale size={20} color="#0d9488" />, status: null }
     ];
+
+    if (bmi) {
+      metrics.push({
+        label: 'Body Mass Index',
+        value: bmi,
+        unit: 'kg/m²',
+        subValue: bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese',
+        icon: <Activity size={20} color="#0d9488" />,
+        status: null
+      });
+    }
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -328,10 +355,20 @@ export default function RecordView() {
                 <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Body Temperature</span>
                 <div style={{ color: 'var(--text-dark)', fontWeight: 600, marginTop: '0.35rem', fontSize: '1.05rem' }}>{data.temperature_c ? `${data.temperature_c} °C (${(data.temperature_c * 9/5 + 32).toFixed(1)} °F)` : 'Not recorded'}</div>
               </div>
-              <div>
+              <div style={{ paddingBottom: '0.875rem', borderBottom: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Height</span>
+                <div style={{ color: 'var(--text-dark)', fontWeight: 600, marginTop: '0.35rem', fontSize: '1.05rem' }}>{data.height_cm ? `${data.height_cm} cm (${formatHeight(data.height_cm)})` : 'Not recorded'}</div>
+              </div>
+              <div style={bmi ? { paddingBottom: '0.875rem', borderBottom: '1px solid #F1F5F9' } : {}}>
                 <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Weight</span>
                 <div style={{ color: 'var(--text-dark)', fontWeight: 600, marginTop: '0.35rem', fontSize: '1.05rem' }}>{data.weight_kg ? `${data.weight_kg} kg (${(data.weight_kg * 2.20462).toFixed(1)} lbs)` : 'Not recorded'}</div>
               </div>
+              {bmi && (
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>Body Mass Index (BMI)</span>
+                  <div style={{ color: 'var(--text-dark)', fontWeight: 600, marginTop: '0.35rem', fontSize: '1.05rem' }}>{bmi} kg/m² ({bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese'})</div>
+                </div>
+              )}
             </div>
           </div>
 

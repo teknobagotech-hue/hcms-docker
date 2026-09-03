@@ -22,11 +22,12 @@ export default function PatientVitals({ patientId, patient }) {
 
   const printColumns = [
     { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString() },
+    { label: 'Height (cm)', key: 'height_cm' },
+    { label: 'Weight (kg)', key: 'weight_kg' },
     { label: 'BP (mmHg)', key: 'bp' },
     { label: 'Pulse (bpm)', key: 'pr' },
     { label: 'SpO2 (%)', key: 'spo2' },
-    { label: 'Temp (°C)', key: 'temperature_c' },
-    { label: 'Weight (kg)', key: 'weight_kg' }
+    { label: 'Temp (°C)', key: 'temperature_c' }
   ];
 
   useEffect(() => {
@@ -114,30 +115,32 @@ export default function PatientVitals({ patientId, patient }) {
           <thead>
             <tr>
               <th>Date</th>
+              <th>Height (cm)</th>
+              <th>Weight (kg)</th>
               <th>BP (mmHg)</th>
               <th>Pulse (bpm)</th>
               <th>SpO2 (%)</th>
               <th>Temp (°C)</th>
-              <th>Weight (kg)</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
             ) : displayedVitals.length === 0 ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>{searchTerm ? `No records matching "${searchTerm}"` : 'No vital signs recorded.'}</td></tr>
+              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-gray)' }}>{searchTerm ? `No records matching "${searchTerm}"` : 'No vital signs recorded.'}</td></tr>
             ) : (
               displayedVitals.map(record => (
                 <tr key={record.vital_id}>
                   <td style={{ fontWeight: 500 }}>
                     {new Date(record.record_date).toLocaleDateString()}
                   </td>
+                  <td>{record.height_cm ? `${record.height_cm} cm` : '-'}</td>
+                  <td>{record.weight_kg ? `${record.weight_kg} kg` : '-'}</td>
                   <td>{record.bp || '-'}</td>
                   <td>{record.pr || '-'}</td>
                   <td>{record.spo2 || '-'}</td>
-                  <td>{record.temperature_c || '-'}</td>
-                  <td>{record.weight_kg || '-'}</td>
+                  <td>{record.temperature_c ? `${record.temperature_c} °C` : '-'}</td>
                   <td>
                     <div className="table-actions">
                       <Link to={`/patients/${patientId}/view/vitals/${record.vital_id}`} className="icon-btn" style={{ color: 'var(--primary)' }}>

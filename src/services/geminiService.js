@@ -38,7 +38,9 @@ export const parseDocumentData = async (fileBuffer) => {
             emergencyContactName: { type: SchemaType.STRING },
             guardianName: { type: SchemaType.STRING },
             medications: { type: SchemaType.STRING },
-            previousHospitalization: { type: SchemaType.STRING }
+            previousHospitalization: { type: SchemaType.STRING },
+            height: { type: SchemaType.STRING, description: "Height in cm or ft/in (e.g. 5'3 or 160 cm)" },
+            weight: { type: SchemaType.STRING, description: "Weight in kg" }
           },
           required: ["firstName", "lastName"]
         },
@@ -131,6 +133,7 @@ export const parseDocumentData = async (fileBuffer) => {
             properties: {
               date: { type: SchemaType.STRING },
               age: { type: SchemaType.STRING },
+              height: { type: SchemaType.STRING, description: "Height in cm or ft/in (e.g. 165 or 5'3)" },
               weight: { type: SchemaType.STRING },
               bp: { type: SchemaType.STRING },
               spo2: { type: SchemaType.STRING },
@@ -234,14 +237,6 @@ export const parseDocumentData = async (fileBuffer) => {
       required: ["patient"]
     };
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-3.6-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
-      },
-    });
-
     const prompt = `
       Extract structured patient and clinical data from the following medical document according to the schema.
       
@@ -265,6 +260,7 @@ export const parseDocumentData = async (fileBuffer) => {
          - Also populate "medicalRecord" with the details of the most recent consultation encounter.
       4. Lab Flow Sheets & Vital Signs:
          - Extract all historical records for Vital Signs, CBC, Blood Chemistry, Serology, Urinalysis, and Imaging/X-Ray reports.
+         - For Vital Signs, extract Date, Age, Height (in cm or ft/in like 5'3 or 160 cm; if not explicit in a row, use overall patient height if documented), Weight (kg), Blood Pressure (bp), SpO2 (spo2), Pulse Rate (pr), and Temperature (temperature).
          - For Lab Flow Sheets formatted as matrices/tables with dates as column headers (e.g., 07/14/2025, 07/22/2025...) and lab tests as rows (e.g., Creatinine, Sodium, Potassium, SGPT/ALT, HbA1c, Pro-BNP, etc.), create a separate object per DATE column in the chemistry or cbc array with all test values corresponding to that specific date.
          - Pay close attention to extracting ALL Chemistry parameters: Creatinine, Sodium, Potassium, Chloride, Ionized Calcium, BUN, Uric Acid, Phosphorous, SGPT/ALT (sgptAlt), SGOT/AST (sgotAst), HbA1c (hba1c), FBS (fbs), RBS (rbs), Total Cholesterol (totalCholesterol), Triglycerides (triglycerides), HDL (hdl), LDL (ldl), VLDL (vldl), CHOL/HDL Ratio (cholHdlRatio), D-Dimer (dDimer), Procalcitonin (procalcitonin), Albumin (albumin), Trop-I (tropI), Pro-BNP (proBnp), PTPA Patient (ptpaPatient), PTPA Control (ptpaControl), Percent Activity / % Activity (percentActivity), INR (inr), PTPA Ratio (ptpaRatio).
          - For CBC, extract WBC, RBC, Hemoglobin, Hematocrit, Platelet Count, Segmenters, Neutrophils, Lymphocytes, Monocytes, Eosinophils.
@@ -275,18 +271,52 @@ export const parseDocumentData = async (fileBuffer) => {
       ${text}
     `;
 
-    try {
-      const response = await model.generateContent(prompt);
-      let jsonText = response.response.text();
-      jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
-      const parsedData = JSON.parse(jsonText);
-      if (parsedData && parsedData.patient) {
-        return parsedData;
+    // Candidate models with fallback order to handle temporary 503 high demand spikes
+    const candidateModels = [
+      "gemini-3.7-flash",
+      "gemini-3.5-flash",
+      "gemini-3.8-flash",
+      "gemini-3.6-flash",
+      "gemini-3.1-flash-lite"
+    ];
+
+    let lastError = null;
+
+    for (const modelName of candidateModels) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: schema,
+            },
+          });
+
+          const response = await model.generateContent(prompt);
+          let jsonText = response.response.text();
+          jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+          const parsedData = JSON.parse(jsonText);
+          if (parsedData && parsedData.patient) {
+            return parsedData;
+          }
+        } catch (geminiError) {
+          lastError = geminiError;
+          const msg = geminiError?.message || '';
+          const isHighDemand = msg.includes('503') || msg.includes('high demand') || msg.includes('429') || geminiError.status === 503;
+          if (isHighDemand && attempt < 2) {
+            console.warn(`[${modelName}] high demand (503), retrying in 1s...`);
+            await new Promise(r => setTimeout(r, 1000));
+            continue;
+          } else {
+            console.warn(`[${modelName}] unavailable (${msg.slice(0, 100)}), trying next candidate...`);
+            break;
+          }
+        }
       }
-    } catch (geminiError) {
-      console.warn("Gemini AI parse error, using text fallback:", geminiError);
     }
 
+    console.warn("All Gemini AI models unavailable, using text fallback:", lastError);
     return parseTextFallback(text);
 
   } catch (error) {
@@ -343,6 +373,14 @@ const parseTextFallback = (text) => {
   const diagMatch = text.match(/MEDICAL\s*DIAGNOSIS:\s*([^\r\n]+)/i);
   if (diagMatch) data.patient.pastMedicalHistory = diagMatch[1].trim();
 
+  // Height (e.g. "HEIGHT: 5’3" or "HEIGHT: 160 cm")
+  const heightMatch = text.match(/HEIGHT:\s*([^\r\n]+)/i);
+  if (heightMatch) data.patient.height = heightMatch[1].trim();
+
+  // Weight (e.g. "WEIGHT: 74 kg.")
+  const weightMatch = text.match(/WEIGHT:\s*([^\r\n]+)/i);
+  if (weightMatch) data.patient.weight = weightMatch[1].trim();
+
   // Consultations section parsing
   const consultSectionMatch = text.match(/CONSULTATIONS\s*([\s\S]*?)(?:GLADDAYS|MEDICATIONS|PREVIOUS|SURGICAL|ALLERGIES|LMP|LAB FLOW|BLOOD CHEMISTRY|X-RAY|ULTRASOUND|ARTERIAL|VENOUS|SEROLOGY|CLINICAL MICROSCOPY|Medical Certificate|Referral Letter|$)/i);
   if (consultSectionMatch) {
@@ -392,6 +430,51 @@ const parseTextFallback = (text) => {
         };
       }
       return { medicationName: line, dosage: '', frequency: '', duration: '' };
+    });
+  }
+  // Fallback Vital Signs parsing if present
+  const patientHeight = data.patient.height || '';
+  const patientWeight = data.patient.weight || '';
+
+  const vitalSectionMatch = text.match(/VITAL\s*SIGNS\s*([\s\S]*?)(?:LAB FLOW|COMPLETE BLOOD COUNT|BLOOD CHEMISTRY|X-RAY|ULTRASOUND|$)/i);
+  if (vitalSectionMatch) {
+    const rawVitals = vitalSectionMatch[1];
+    const dateMatches = [...rawVitals.matchAll(/\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/g)];
+    if (dateMatches.length > 0) {
+      const bpMatches = [...rawVitals.matchAll(/\b(\d{2,3}\/\d{2,3})\b/g)];
+      const spo2Matches = [...rawVitals.matchAll(/\b(\d{2,3})\s*%/g)];
+      const tempMatches = [...rawVitals.matchAll(/\b(\d{2}(?:\.\d+)?)\s*(?:°C|C)\b/g)];
+      const weightMatches = [...rawVitals.matchAll(/\b(\d{2,3}(?:\.\d+)?)\s*(?:kg\.?|lbs\.?)\b/gi)];
+
+      const uniqueDates = [...new Set(dateMatches.map(m => m[1]))];
+      uniqueDates.forEach((d, i) => {
+        data.vitalSigns.push({
+          date: d,
+          age: '',
+          height: patientHeight,
+          weight: weightMatches[i] ? weightMatches[i][1] : patientWeight,
+          bp: bpMatches[i] ? bpMatches[i][1] : '',
+          spo2: spo2Matches[i] ? spo2Matches[i][1] : '',
+          pr: '',
+          temperature: tempMatches[i] ? tempMatches[i][1] : ''
+        });
+      });
+    }
+  }
+
+  if (data.vitalSigns.length === 0 && (patientHeight || patientWeight)) {
+    const bpMatch = text.match(/(?:BP|BLOOD\s*PRESSURE)[\s:-]*(\d{2,3}\/\d{2,3})/i);
+    const spo2Match = text.match(/(?:SPO2|O2\s*SAT)[\s:-]*(\d{2,3})\s*%/i);
+    const tempMatch = text.match(/(?:TEMP|TEMPERATURE)[\s:-]*(\d{2}(?:\.\d+)?)\s*(?:°C|C)?/i);
+    data.vitalSigns.push({
+      date: new Date().toISOString().split('T')[0],
+      age: '',
+      height: patientHeight,
+      weight: patientWeight,
+      bp: bpMatch ? bpMatch[1] : '',
+      spo2: spo2Match ? spo2Match[1] : '',
+      pr: '',
+      temperature: tempMatch ? tempMatch[1] : ''
     });
   }
 
