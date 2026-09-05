@@ -66,6 +66,8 @@ import BillingList from './pages/billing/BillingList';
 import BillingForm from './pages/billing/BillingForm';
 import BillingView from './pages/billing/BillingView';
 
+import ReportsHub from './pages/reports/ReportsHub';
+
 import './index.css';
 
 function RoleGuard({ allowedRoles, children }) {
@@ -493,6 +495,11 @@ function AppRoutes() {
         <Route path="/billing/records/add" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/records/edit/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist']}><LayoutWrapper><BillingForm /></LayoutWrapper></RoleGuard>} />
         <Route path="/billing/records/view/:id" element={<RoleGuard allowedRoles={['admin', 'receptionist', 'doctor']}><LayoutWrapper><BillingView /></LayoutWrapper></RoleGuard>} />
+
+        {/* Reports & Analytics */}
+        <Route path="/reports" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor', 'receptionist']}><LayoutWrapper><ReportsHub defaultTab="sales" /></LayoutWrapper></RoleGuard>} />
+        <Route path="/reports/sales" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor', 'receptionist']}><LayoutWrapper><ReportsHub defaultTab="sales" /></LayoutWrapper></RoleGuard>} />
+        <Route path="/reports/inventory" element={<RoleGuard allowedRoles={['admin', 'pharmacist', 'doctor']}><LayoutWrapper><ReportsHub defaultTab="inventory" /></LayoutWrapper></RoleGuard>} />
 
       </Routes>
     </Router>

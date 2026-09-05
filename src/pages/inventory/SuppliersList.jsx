@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Archive, Trash2, Plus, Truck, Eye } from 'lucide-react';
+import { Search, Edit, Archive, Plus, Truck, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -73,21 +73,6 @@ export default function SuppliersList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('suppliers')
-      .delete()
-      .eq('supplier_id', id);
-
-    if (error) {
-      toast.error('Failed to delete supplier. They may be linked to stock receipts.');
-    } else {
-      toast.success('Supplier deleted successfully');
-      fetchSuppliers();
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action, supplier) => {
     if (action === 'archive') {
       setModalConfig({
@@ -96,14 +81,6 @@ export default function SuppliersList() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: () => handleArchive(supplier.supplier_id)
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Supplier',
-        message: `Are you sure you want to permanently delete "${supplier.supplier_name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(supplier.supplier_id)
       });
     }
     setModalOpen(true);
@@ -198,9 +175,6 @@ export default function SuppliersList() {
                               <Archive size={18} />
                             </button>
                           )}
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', sup)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>

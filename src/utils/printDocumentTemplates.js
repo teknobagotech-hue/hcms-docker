@@ -668,43 +668,103 @@ export function printBillingReceipt({ bill }) {
     : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const billNo = `INV-${String(bill.billing_id).padStart(5, '0')}`;
-  const amount = Number(bill.amount || 0);
+
+  // Fees breakdown
+  const consultFee = Number(bill.consultation_fee || 0);
+  const treatFee = Number(bill.treatment_fee || 0);
+  const medFee = Number(bill.medication_fee || 0);
+  const labFee = Number(bill.lab_fee || 0);
+  const otherFee = Number(bill.other_fees || 0);
+  const discount = Number(bill.discount || 0);
+
+  const subtotal = consultFee + treatFee + medFee + labFee + otherFee;
+  const totalAmount = Number(bill.amount || bill.total_amount || (subtotal - discount) || 0);
+  const isPaid = (bill.payment_status || '').toLowerCase() === 'paid';
+  const isPartial = (bill.payment_status || '').toLowerCase() === 'partial';
+
+  const amountPaid = isPaid ? totalAmount : 0;
+  const balance = totalAmount - amountPaid;
+
+  const formatCurrency = (val) => `₱${Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Billing Statement - ${billNo}</title>
+      <title>Billing Receipt - ${billNo}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: white; margin: 0; padding: 24px; }
-        .receipt-card { max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 16px; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .header p { font-size: 12px; color: #64748b; margin: 2px 0; }
-        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 13px; }
-        .info-item span { display: block; font-size: 11px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: #1e293b; background: #f0f0f0; margin: 0; padding: 15px 0; }
+        .print-container { 
+          width: 5.5in; 
+          max-width: 100%; 
+          min-height: 8.5in; 
+          box-sizing: border-box; 
+          margin: 0 auto; 
+          padding: 0 0.35in 0.4in 0.35in; 
+          position: relative; 
+          background: white; 
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+        }
+        .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 12px; margin-top: 0; margin-bottom: 16px; }
+        .header h1 { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header p { font-size: 11.5px; color: #64748b; margin: 2px 0; }
+        .receipt-title { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; font-size: 12px; }
+        .info-item span { display: block; font-size: 10.5px; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
         .info-item strong { color: #0f172a; font-weight: 600; }
-        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 14px; margin-bottom: 20px; }
-        .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #475569; }
-        .summary-row.total { font-size: 16px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        .items-table th { text-align: left; padding: 6px 4px; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+        .items-table td { padding: 6px 4px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+        .summary-section { border-top: 2px dashed #cbd5e1; padding-top: 12px; margin-bottom: 16px; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: #475569; }
+        .summary-row.total { font-size: 15px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; }
         .badge-paid { background: #dcfce7; color: #166534; }
         .badge-unpaid { background: #fef3c7; color: #92400e; }
         .badge-partial { background: #e0f2fe; color: #075985; }
-        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 16px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 12px; }
         
         @media print {
-          @page { margin: 0; }
-          body { padding: 15mm; }
-          .receipt-card { border: none; box-shadow: none; max-width: 100%; padding: 0; }
+          @page { 
+            margin: 0; 
+            size: letter landscape; 
+          }
+          html, body { 
+            width: 11in; 
+            margin: 0; 
+            padding: 0; 
+            background: white; 
+            color: white !important; 
+            display: block; 
+          }
+          .print-container { 
+            position: relative;
+            left: 0;
+            top: 0;
+            width: 5.5in !important;
+            max-width: 5.5in !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 0 0.35in 0.4in 0.35in !important; 
+            border: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            box-sizing: border-box !important;
+            float: left;
+            color: black !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .print-container * {
+            color: black !important;
+          }
           .no-print { display: none !important; }
         }
       </style>
     </head>
     <body>
-      <div class="receipt-card">
+      <div class="print-container">
         <div class="header">
           <h1>MedDesk Billing</h1>
           <p><strong>Dr. Gladdays Casuga-Napigkit, MD, MBAHHCM</strong></p>
@@ -732,26 +792,96 @@ export function printBillingReceipt({ bill }) {
           </div>
           <div class="info-item" style="text-align: right;">
             <span>Payment Status</span>
-            <span class="badge badge-${bill.payment_status === 'paid' ? 'paid' : bill.payment_status === 'partial' ? 'partial' : 'unpaid'}">
+            <span class="badge badge-${isPaid ? 'paid' : isPartial ? 'partial' : 'unpaid'}">
               ${bill.payment_status || 'unpaid'}
             </span>
           </div>
         </div>
 
+        <!-- Transparent Itemized Fee Breakdown Table -->
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th style="width: 8%;">#</th>
+              <th>Service / Particulars</th>
+              <th style="text-align: center; width: 16%;">Status</th>
+              <th style="text-align: right; width: 28%;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Consultation Fee</td>
+              <td style="text-align: center; font-size: 11px; color: ${consultFee > 0 ? '#0d9488' : '#94a3b8'};">${consultFee > 0 ? 'Charged' : 'No Charge'}</td>
+              <td style="text-align: right; font-weight: 600;">${formatCurrency(consultFee)}</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Treatment & Procedures Fee</td>
+              <td style="text-align: center; font-size: 11px; color: ${treatFee > 0 ? '#0d9488' : '#94a3b8'};">${treatFee > 0 ? 'Charged' : 'No Charge'}</td>
+              <td style="text-align: right; font-weight: 600; color: ${treatFee > 0 ? '#1e293b' : '#94a3b8'};">${formatCurrency(treatFee)}</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Medication & Supplies Fee</td>
+              <td style="text-align: center; font-size: 11px; color: ${medFee > 0 ? '#0d9488' : '#94a3b8'};">${medFee > 0 ? 'Charged' : 'No Charge'}</td>
+              <td style="text-align: right; font-weight: 600;">${formatCurrency(medFee)}</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Laboratory & Diagnostics Fee</td>
+              <td style="text-align: center; font-size: 11px; color: ${labFee > 0 ? '#0d9488' : '#94a3b8'};">${labFee > 0 ? 'Charged' : 'No Charge'}</td>
+              <td style="text-align: right; font-weight: 600; color: ${labFee > 0 ? '#1e293b' : '#94a3b8'};">${formatCurrency(labFee)}</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Other / Miscellaneous Fees</td>
+              <td style="text-align: center; font-size: 11px; color: ${otherFee > 0 ? '#0d9488' : '#94a3b8'};">${otherFee > 0 ? 'Charged' : 'No Charge'}</td>
+              <td style="text-align: right; font-weight: 600; color: ${otherFee > 0 ? '#1e293b' : '#94a3b8'};">${formatCurrency(otherFee)}</td>
+            </tr>
+          </tbody>
+        </table>
+
         <div class="summary-section">
-          <div class="summary-row total">
-            <span>Total Amount</span>
-            <span>₱${amount.toFixed(2)}</span>
+          <div class="summary-row">
+            <span>Subtotal (Gross Charges)</span>
+            <span>${formatCurrency(subtotal)}</span>
           </div>
-          ${bill.notes ? `
-            <div style="margin-top: 12px; font-size: 12px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 6px;">
-              <strong>Notes:</strong> ${bill.notes}
+          ${discount > 0 ? `
+            <div class="summary-row" style="color: #059669;">
+              <span>Discount</span>
+              <span>-${formatCurrency(discount)}</span>
             </div>
           ` : ''}
+          <div class="summary-row total">
+            <span>Total Amount Due</span>
+            <span>${formatCurrency(totalAmount)}</span>
+          </div>
+          <div class="summary-row" style="margin-top: 8px;">
+            <span>Amount Paid</span>
+            <span>${formatCurrency(amountPaid)}</span>
+          </div>
+          ${balance > 0 ? `
+            <div class="summary-row" style="color: #dc2626; font-weight: 600;">
+              <span>Balance Due</span>
+              <span>${formatCurrency(balance)}</span>
+            </div>
+          ` : `
+            <div class="summary-row" style="color: #059669; font-weight: 600;">
+              <span>Balance</span>
+              <span>₱0.00 (Fully Paid)</span>
+            </div>
+          `}
         </div>
 
+        ${bill.notes ? `
+          <div style="font-size: 11px; color: #64748b; background: #f8fafc; padding: 6px 10px; border-radius: 4px; margin-top: 8px;">
+            <strong>Notes:</strong> ${bill.notes}
+          </div>
+        ` : ''}
+
         <div class="footer">
-          <p style="margin: 0 0 4px 0; font-weight: 500;">Thank you!</p>
+          <p style="margin: 0 0 4px 0; font-weight: 500;">Thank you for your payment!</p>
           <p style="margin: 0; font-size: 11px;">"A merry heart doeth good like a medicine." Proverbs 17:22</p>
         </div>
 
@@ -767,6 +897,9 @@ export function printBillingReceipt({ bill }) {
 
   executePrint(htmlContent);
 }
+
+
+
 
 export function printStockReceipt({ receipt, items = [] }) {
   const supplierName = receipt.suppliers?.supplier_name || 'N/A';

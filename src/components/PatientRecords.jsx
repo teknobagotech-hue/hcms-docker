@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Heart, CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { Plus, Edit, Archive, Heart, CheckCircle2, XCircle, Eye } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 
@@ -20,12 +20,25 @@ export default function PatientRecords({ patientId, patient }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+  const formatEasyRead = (text) => {
+    if (!text || typeof text !== 'string') return text || '-';
+    const parts = text.split(/\n|;\s*|\.\s+(?=[a-zA-Z])|,\s+(?=[a-zA-Z])/).map(p => p.trim()).filter(Boolean);
+    if (parts.length > 1) {
+      const listItems = parts.map(part => {
+        let cleanPart = part.replace(/^[-•*]\s*/, '');
+        return `<li style="margin-bottom: 2px;">${cleanPart}</li>`;
+      }).join('');
+      return `<ul style="margin: 0; padding-left: 1.2rem; list-style-type: disc;">${listItems}</ul>`;
+    }
+    return text;
+  };
+
   const printColumns = [
     { label: 'Date', render: (r) => new Date(r.record_date).toLocaleDateString(), width: '10%' },
     { label: 'Attending Doctor', render: (r) => r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-', width: '14%' },
-    { label: 'Chief Complaint', key: 'chief_complaint', width: '18%' },
-    { label: 'Diagnosis', key: 'diagnosis', width: '20%' },
-    { label: 'Treatment Provided', render: (r) => r.treatment || r.treatment_plan || '-', width: '12%' },
+    { label: 'Chief Complaint', render: (r) => formatEasyRead(r.chief_complaint), width: '18%' },
+    { label: 'Diagnosis', render: (r) => formatEasyRead(r.diagnosis), width: '20%' },
+    { label: 'Treatment Provided', render: (r) => formatEasyRead(r.treatment || r.treatment_plan), width: '12%' },
     {
       label: 'SOAP Notes',
       width: '26%',
@@ -73,7 +86,7 @@ export default function PatientRecords({ patientId, patient }) {
           idx === self.findIndex(t => t.header.toLowerCase() === p.header.toLowerCase() && t.content === p.content)
         );
 
-        return uniqueParts.map(pt => `<div style="margin-bottom: 4px;"><strong>${pt.header}:</strong> ${pt.content}</div>`).join('');
+        return uniqueParts.map(pt => `<div style="margin-bottom: 6px;"><strong style="display: block; margin-bottom: 2px;">${pt.header}:</strong><div>${formatEasyRead(pt.content)}</div></div>`).join('');
       }
     }
   ];
@@ -102,6 +115,7 @@ export default function PatientRecords({ patientId, patient }) {
       .from('medical_records')
       .select('*, doctors(first_name, last_name)', { count: 'exact' })
       .eq('patient_id', patientId)
+      .or('status.is.null,status.neq.archived')
       .range(from, to)
       .order('record_date', { ascending: false });
 
@@ -126,16 +140,16 @@ export default function PatientRecords({ patientId, patient }) {
     setLoadingCardio(false);
   };
 
-  const handleDelete = async () => {
+  const handleArchive = async () => {
     const { error } = await supabase
       .from('medical_records')
-      .delete()
+      .update({ status: 'archived' })
       .eq('record_id', selectedId);
 
     if (error) {
-      toast.error('Failed to delete medical record');
+      toast.error('Failed to archive medical record');
     } else {
-      toast.success('Record deleted');
+      toast.success('Medical record archived successfully');
       fetchRecords();
     }
     setModalOpen(false);
@@ -259,9 +273,11 @@ export default function PatientRecords({ patientId, patient }) {
                         <Link to={`/patients/${patientId}/records/edit/${rec.record_id}`} className="icon-btn edit" title="Edit Record">
                           <Edit size={16} />
                         </Link>
-                        <button className="icon-btn delete" title="Delete Record" onClick={() => { setSelectedId(rec.record_id); setModalOpen(true); }}>
-                          <Trash2 size={16} />
-                        </button>
+                        {rec.status !== 'archived' && (
+                          <button className="icon-btn archive" title="Archive Record" onClick={() => { setSelectedId(rec.record_id); setModalOpen(true); }}>
+                            <Archive size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -285,11 +301,11 @@ export default function PatientRecords({ patientId, patient }) {
       <ConfirmModal
         isOpen={modalOpen}
         onCancel={() => setModalOpen(false)}
-        title="Delete Encounter"
-        message="Are you sure you want to delete this medical record? This action cannot be undone."
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
+        title="Archive Encounter"
+        message="Are you sure you want to archive this medical record?"
+        confirmText="Archive"
+        confirmType="warning"
+        onConfirm={handleArchive}
       />
     </div>
   );

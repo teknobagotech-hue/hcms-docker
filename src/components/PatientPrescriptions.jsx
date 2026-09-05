@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Edit, Trash2, Plus, FileSignature, Eye, Printer } from 'lucide-react';
+import { Edit, Archive, Plus, FileSignature, Eye, Printer } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 import { printPrescription } from '../utils/printDocumentTemplates';
@@ -62,16 +62,16 @@ export default function PatientPrescriptions({ patientId, patient }) {
     setLoading(false);
   };
 
-  const handleDelete = async () => {
+  const handleCancel = async () => {
     const { error } = await supabase
       .from('prescriptions')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('prescription_id', selectedId);
 
     if (error) {
-      toast.error('Failed to delete prescription.');
+      toast.error('Failed to cancel prescription.');
     } else {
-      toast.success('Prescription deleted successfully');
+      toast.success('Prescription cancelled successfully');
       fetchPrescriptions();
     }
     setModalOpen(false);
@@ -165,9 +165,11 @@ export default function PatientPrescriptions({ patientId, patient }) {
                       <Link to={`/pharmacy/prescriptions/edit/${presc.prescription_id}`} className="icon-btn edit" title="Edit">
                         <Edit size={18} />
                       </Link>
-                      <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', presc)}>
-                        <Trash2 size={18} />
-                      </button>
+                      {presc.status !== 'cancelled' && (
+                        <button className="icon-btn archive" title="Cancel Prescription" onClick={() => openConfirmModal('cancel', presc)}>
+                          <Archive size={18} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -190,11 +192,11 @@ export default function PatientPrescriptions({ patientId, patient }) {
       <ConfirmModal 
         isOpen={modalOpen} 
         onCancel={() => setModalOpen(false)}
-        title="Delete Prescription"
-        message="Are you sure you want to permanently delete this prescription?"
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
+        title="Cancel Prescription"
+        message="Are you sure you want to cancel this prescription?"
+        confirmText="Cancel Prescription"
+        confirmType="warning"
+        onConfirm={handleCancel}
       />
     </div>
   );

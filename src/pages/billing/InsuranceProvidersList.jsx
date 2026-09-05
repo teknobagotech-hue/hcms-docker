@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Archive, Trash2, Plus, ShieldPlus, Eye } from 'lucide-react';
+import { Search, Edit, Archive, Plus, ShieldPlus, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -70,21 +70,6 @@ export default function InsuranceProvidersList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('insurance_providers')
-      .delete()
-      .eq('insurance_provider_id', id);
-
-    if (error) {
-      toast.error('Failed to delete provider. They may be linked to patient insurance records.');
-    } else {
-      toast.success('Provider deleted successfully');
-      fetchProviders();
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action, provider) => {
     if (action === 'archive') {
       setModalConfig({
@@ -93,14 +78,6 @@ export default function InsuranceProvidersList() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: () => handleArchive(provider.insurance_provider_id)
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Provider',
-        message: `Are you sure you want to permanently delete "${provider.provider_name}"?`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(provider.insurance_provider_id)
       });
     }
     setModalOpen(true);
@@ -193,9 +170,6 @@ export default function InsuranceProvidersList() {
                               <Archive size={18} />
                             </button>
                           )}
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', prov)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>

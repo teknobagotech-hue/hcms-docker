@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Receipt, Printer, Eye } from 'lucide-react';
-import ConfirmModal from '../../components/ConfirmModal';
+import { Search, Edit, Plus, Receipt, Printer, Eye } from 'lucide-react';
 import { printBillingReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
 
@@ -17,9 +16,6 @@ export default function BillingList() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const limit = 10;
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalConfig, setModalConfig] = useState(null);
 
   useEffect(() => {
     fetchBills();
@@ -57,34 +53,6 @@ export default function BillingList() {
       setTotalCount(count);
     }
     setLoading(false);
-  };
-
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('billing')
-      .delete()
-      .eq('billing_id', id);
-
-    if (error) {
-      toast.error('Failed to delete billing record.');
-    } else {
-      toast.success('Billing record deleted successfully');
-      fetchBills();
-    }
-    setModalOpen(false);
-  };
-
-  const openConfirmModal = (action, bill) => {
-    if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Billing Record',
-        message: `Are you sure you want to permanently delete this billing record?`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(bill.billing_id)
-      });
-      setModalOpen(true);
-    }
   };
 
   const totalPages = Math.ceil(totalCount / limit);
@@ -175,12 +143,17 @@ export default function BillingList() {
                           <Link to={`/billing/records/view/${bill.billing_id}`} className="icon-btn view" title="View Bill">
                             <Eye size={18} />
                           </Link>
+                          <button 
+                            className="icon-btn" 
+                            style={{ color: 'var(--text-gray)' }} 
+                            title="Print Receipt" 
+                            onClick={() => printBillingReceipt({ bill })}
+                          >
+                            <Printer size={18} />
+                          </button>
                           <Link to={`/billing/records/edit/${bill.billing_id}`} className="icon-btn edit" title="Edit Bill">
                             <Edit size={18} />
                           </Link>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', bill)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -219,12 +192,6 @@ export default function BillingList() {
           )}
         </div>
       </div>
-
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onCancel={() => setModalOpen(false)}
-        {...modalConfig}
-      />
     </div>
   );
 }

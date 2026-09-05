@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
-import ConfirmModal from './ConfirmModal';
+import { Plus, Edit, Eye } from 'lucide-react';
 import TablePrintControls from './TablePrintControls';
 
 export default function PatientVitals({ patientId, patient }) {
@@ -14,9 +13,6 @@ export default function PatientVitals({ patientId, patient }) {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const limit = 10;
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -70,21 +66,6 @@ export default function PatientVitals({ patientId, patient }) {
     const q = searchTerm.toLowerCase().trim();
     return Object.values(record).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(q));
   });
-
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('vital_signs')
-      .delete()
-      .eq('vital_id', selectedId);
-
-    if (error) {
-      toast.error('Failed to delete vital signs record');
-    } else {
-      toast.success('Record deleted');
-      fetchVitals();
-    }
-    setModalOpen(false);
-  };
 
   const totalPages = Math.ceil(totalCount / limit);
 
@@ -149,9 +130,6 @@ export default function PatientVitals({ patientId, patient }) {
                       <Link to={`/patients/${patientId}/vitals/edit/${record.vital_id}`} className="icon-btn edit">
                         <Edit size={16} />
                       </Link>
-                      <button className="icon-btn delete" onClick={() => { setSelectedId(record.vital_id); setModalOpen(true); }}>
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -170,16 +148,6 @@ export default function PatientVitals({ patientId, patient }) {
           <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
         </div>
       )}
-
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onCancel={() => setModalOpen(false)}
-        title="Delete Record"
-        message="Are you sure you want to delete this vital signs record?"
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
-      />
     </div>
   );
 }

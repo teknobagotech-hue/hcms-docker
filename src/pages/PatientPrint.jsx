@@ -102,39 +102,86 @@ export default function PatientPrint() {
   ];
   const activeCbcCols = allCbcColumns.filter(c => c.key === 'test_date' || cbc.some(l => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
 
-  const allChemColumns = [
-    { label: 'DATE', key: 'test_date', render: l => new Date(l.test_date).toLocaleDateString() },
-    { label: 'Creatinine', key: 'creatinine' },
-    { label: 'Na', key: 'sodium' },
-    { label: 'K', key: 'potassium' },
-    { label: 'Cl', key: 'chloride' },
-    { label: 'iCa', key: 'ionized_calcium' },
-    { label: 'BUN', key: 'bun' },
-    { label: 'UA', key: 'uric_acid' },
-    { label: 'Phos', key: 'phosphorous' },
-    { label: 'SGPT', key: 'sgpt_alt' },
-    { label: 'SGOT', key: 'sgot_ast' },
-    { label: 'HbA1c', key: 'hba1c' },
-    { label: 'FBS', key: 'fbs' },
-    { label: 'RBS', key: 'rbs' },
-    { label: 'Chol', key: 'total_cholesterol' },
-    { label: 'Trig', key: 'triglycerides' },
-    { label: 'HDL', key: 'hdl' },
-    { label: 'LDL', key: 'ldl' },
-    { label: 'VLDL', key: 'vldl' },
-    { label: 'Chol/HDL', key: 'chol_hdl_ratio' },
-    { label: 'D-Dimer', key: 'd_dimer' },
-    { label: 'Procalcitonin', key: 'procalcitonin' },
-    { label: 'Albumin', key: 'albumin' },
-    { label: 'Trop-I', key: 'trop_i' },
-    { label: 'Pro-BNP', key: 'pro_bnp' },
-    { label: 'PTPA Pat', key: 'ptpa_patient' },
-    { label: 'PTPA Ctrl', key: 'ptpa_control' },
-    { label: '% Act', key: 'percent_activity' },
-    { label: 'INR', key: 'inr' },
-    { label: 'PTPA Ratio', key: 'ptpa_ratio' }
+  const chemPanels = [
+    {
+      title: 'Renal Function & Electrolytes',
+      columns: [
+        { label: 'Creatinine', key: 'creatinine' },
+        { label: 'BUN', key: 'bun' },
+        { label: 'Na', key: 'sodium' },
+        { label: 'K', key: 'potassium' },
+        { label: 'Cl', key: 'chloride' },
+        { label: 'iCa', key: 'ionized_calcium' },
+        { label: 'UA', key: 'uric_acid' },
+        { label: 'Phos', key: 'phosphorous' }
+      ]
+    },
+    {
+      title: 'Liver Function & Glycemic Profile',
+      columns: [
+        { label: 'SGPT', key: 'sgpt_alt' },
+        { label: 'SGOT', key: 'sgot_ast' },
+        { label: 'FBS', key: 'fbs' },
+        { label: 'RBS', key: 'rbs' },
+        { label: 'HbA1c', key: 'hba1c' }
+      ]
+    },
+    {
+      title: 'Lipid Profile',
+      columns: [
+        { label: 'Chol', key: 'total_cholesterol' },
+        { label: 'Trig', key: 'triglycerides' },
+        { label: 'HDL', key: 'hdl' },
+        { label: 'LDL', key: 'ldl' },
+        { label: 'VLDL', key: 'vldl' },
+        { label: 'Chol/HDL', key: 'chol_hdl_ratio' }
+      ]
+    },
+    {
+      title: 'Cardiac, Coagulation & Special Markers',
+      columns: [
+        { label: 'Trop-I', key: 'trop_i' },
+        { label: 'Pro-BNP', key: 'pro_bnp' },
+        { label: 'D-Dimer', key: 'd_dimer' },
+        { label: 'Procalcitonin', key: 'procalcitonin' },
+        { label: 'Albumin', key: 'albumin' },
+        { label: 'PTPA Pat', key: 'ptpa_patient' },
+        { label: 'PTPA Ctrl', key: 'ptpa_control' },
+        { label: '% Act', key: 'percent_activity' },
+        { label: 'INR', key: 'inr' },
+        { label: 'PTPA Ratio', key: 'ptpa_ratio' }
+      ]
+    }
   ];
-  const activeChemCols = allChemColumns.filter(c => c.key === 'test_date' || chem.some(l => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
+
+  const activeChemPanels = chemPanels.map(panel => {
+    const activeCols = panel.columns.filter(c => chem.some(l => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
+    const rows = chem.filter(l => activeCols.some(c => l[c.key] !== null && l[c.key] !== undefined && l[c.key] !== ''));
+    return {
+      title: panel.title,
+      columns: activeCols,
+      rows
+    };
+  }).filter(p => p.columns.length > 0 && p.rows.length > 0);
+
+  const formatEasyRead = (text) => {
+    if (!text || typeof text !== 'string') return text || '-';
+    
+    // Split by newlines, semicolons, or periods/commas followed by a space and a letter
+    const parts = text.split(/\n|;\s*|\.\s+(?=[a-zA-Z])|,\s+(?=[a-zA-Z])/).map(p => p.trim()).filter(Boolean);
+    
+    if (parts.length > 1) {
+      return (
+        <ul style={{ margin: '0', paddingLeft: '1.1rem', listStyleType: 'disc' }}>
+          {parts.map((part, idx) => {
+            let cleanPart = part.replace(/^[-•*]\s*/, '');
+            return <li key={idx} style={{ marginBottom: '1px', lineHeight: '1.3' }}>{cleanPart}</li>;
+          })}
+        </ul>
+      );
+    }
+    return text;
+  };
 
   return (
     <div className="print-container" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
@@ -155,14 +202,17 @@ export default function PatientPrint() {
               width: 100% !important; 
               max-width: 100% !important; 
               margin: 0 !important; 
-              box-sizing: border-box !important;
+              box-sizing: border-box !important; 
             }
             @page { 
               margin: 0; 
               size: A4 portrait; 
             }
             .page-break { page-break-before: always; }
-            .no-break { page-break-inside: avoid; }
+            .no-break { 
+              page-break-inside: avoid !important; 
+              break-inside: avoid !important; 
+            }
             button { display: none !important; }
             .print-table-wrapper { 
               overflow: visible !important; 
@@ -172,9 +222,18 @@ export default function PatientPrint() {
               width: 100% !important; 
               font-size: 8pt !important; 
               table-layout: fixed !important; 
-              border-collapse: collapse !important;
-              margin-bottom: 1rem !important;
-              box-sizing: border-box !important;
+              border-collapse: collapse !important; 
+              margin-bottom: 1rem !important; 
+              box-sizing: border-box !important; 
+              page-break-inside: auto !important; 
+            }
+            .print-table tr { 
+              page-break-inside: avoid !important; 
+              break-inside: avoid !important; 
+              page-break-after: auto !important; 
+            }
+            .print-table thead { 
+              display: table-header-group !important; 
             }
             .print-table th, .print-table td { 
               border: 1px solid #94a3b8 !important; 
@@ -189,23 +248,37 @@ export default function PatientPrint() {
               background-color: #f1f5f9 !important; 
               font-weight: bold !important; 
               color: #0f172a !important; 
-              white-space: normal !important;
+              white-space: normal !important; 
             }
 
-            .print-table-compact {
-              table-layout: auto !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              font-size: 7pt !important;
+            .print-table-compact { 
+              table-layout: auto !important; 
+              width: 100% !important; 
+              max-width: 100% !important; 
+              font-size: 7.5pt !important; 
+              border-collapse: collapse !important; 
+              margin-bottom: 0.75rem !important; 
             }
-            .print-table-compact th, .print-table-compact td {
-              padding: 2px 3px !important;
-              white-space: nowrap !important;
-              text-align: center !important;
-              word-break: normal !important;
+            .print-table-compact th, .print-table-compact td { 
+              border: 1px solid #94a3b8 !important; 
+              padding: 3px 4px !important; 
+              text-align: center !important; 
+              vertical-align: middle !important; 
             }
-            .print-table-compact th:first-child, .print-table-compact td:first-child {
-              text-align: left !important;
+            .print-table-compact th { 
+              background-color: #f1f5f9 !important; 
+              font-weight: bold !important; 
+              color: #0f172a !important; 
+              white-space: normal !important; 
+              word-break: break-word !important; 
+              line-height: 1.2 !important; 
+            }
+            .print-table-compact td { 
+              white-space: nowrap !important; 
+              word-break: normal !important; 
+            }
+            .print-table-compact th:first-child, .print-table-compact td:first-child { 
+              text-align: left !important; 
             }
           }
 
@@ -215,77 +288,80 @@ export default function PatientPrint() {
           .print-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; table-layout: fixed; box-sizing: border-box; }
           .print-table th, .print-table td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; word-break: break-word; overflow-wrap: break-word; vertical-align: top; white-space: pre-wrap; }
           .print-table th { background-color: #f8f9fa; font-weight: bold; white-space: normal; }
-          .section-title { font-size: 1.1rem; font-weight: bold; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
-          .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; font-size: 0.9rem; }
+          .print-table-compact { table-layout: auto; }
+          .print-table-compact th, .print-table-compact td { padding: 4px 6px; text-align: center; }
+          .print-table-compact th:first-child, .print-table-compact td:first-child { text-align: left; }
+          .section-title { font-size: 1.1rem; font-weight: bold; margin: 1.25rem 0 0.5rem 0; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+          .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; font-size: 0.9rem; }
           .patient-info p { margin: 0.25rem 0; }
         `}
       </style>
 
       {/* Doctor Header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: '0 0 0.25rem 0', color: '#000' }}>Gladdays Casuga-Napigkit, MD, MBAHHCM, FPCP, FPCC, FPSVM</h1>
-        <p style={{ fontSize: '1rem', color: '#333', margin: '0 0 0.5rem 0' }}>Internal Medicine, Adult Cardiology, Vascular Medicine</p>
-        <p style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#000', margin: 0 }}>PATIENT PROFILE</p>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: 'bold', margin: '0 0 0.25rem 0', color: '#000' }}>Gladdays Casuga-Napigkit, MD, MBAHHCM, FPCP, FPCC, FPSVM</h1>
+        <p style={{ fontSize: '0.95rem', color: '#333', margin: '0 0 0.4rem 0' }}>Internal Medicine, Adult Cardiology, Vascular Medicine</p>
+        <p style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#000', margin: 0 }}>PATIENT PROFILE</p>
       </div>
 
       {/* Patient Information */}
       <div className="no-break">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', borderBottom: '2px solid #000', paddingBottom: '0.75rem' }}>
-          <h1 className="print-title" style={{ margin: 0, fontSize: '1.75rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1rem', borderBottom: '2px solid #000', paddingBottom: '0.5rem' }}>
+          <h1 className="print-title" style={{ margin: 0, fontSize: '1.5rem' }}>
             {patient.last_name}, {patient.first_name} {patient.middle_name}
           </h1>
-          <div style={{ textAlign: 'right', fontSize: '0.9rem' }}>
+          <div style={{ textAlign: 'right', fontSize: '0.85rem' }}>
             <p style={{ margin: 0 }}><strong>Patient ID:</strong> #{patient.patient_id}</p>
             <p style={{ margin: 0 }}><strong>Date Printed:</strong> {new Date().toLocaleDateString()}</p>
             <p style={{ margin: 0 }}><strong>Status:</strong> {patient.status?.toUpperCase() || 'N/A'}</p>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem', fontSize: '0.9rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
           {/* Personal & Contact Information */}
           <div>
-            <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>Personal & Contact Information</h3>
-            <p style={{ margin: '0.35rem 0' }}><strong>DOB / Age:</strong> {patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : 'N/A'} ({calculateAge(patient.date_of_birth)} yrs)</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Gender:</strong> {patient.gender || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Marital Status:</strong> {patient.marital_status || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Occupation:</strong> {patient.occupation || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Contact Number:</strong> {patient.contact_number || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Email Address:</strong> {patient.email || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Home Address:</strong> {patient.address || 'N/A'}</p>
+            <h3 style={{ fontSize: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.2rem', marginBottom: '0.5rem' }}>Personal & Contact Information</h3>
+            <p style={{ margin: '0.25rem 0' }}><strong>DOB / Age:</strong> {patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : 'N/A'} ({calculateAge(patient.date_of_birth)} yrs)</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Gender:</strong> {patient.gender || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Marital Status:</strong> {patient.marital_status || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Occupation:</strong> {patient.occupation || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Contact Number:</strong> {patient.contact_number || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Email Address:</strong> {patient.email || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Home Address:</strong> {patient.address || 'N/A'}</p>
           </div>
 
           {/* General Medical History */}
           <div>
-            <h3 style={{ fontSize: '1.1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.25rem', marginBottom: '0.75rem' }}>General Medical History</h3>
-            <p style={{ margin: '0.35rem 0' }}><strong>Medical History:</strong> {patient.medical_history || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Surgical History:</strong> {patient.surgical_history || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Known Allergies:</strong> {patient.allergies || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Smoking History:</strong> {patient.smoking_history || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Alcohol Intake:</strong> {patient.alcoholic_intake || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Medications:</strong> {patient.medications || 'N/A'}</p>
-            <p style={{ margin: '0.35rem 0' }}><strong>Previous Hospitalization:</strong> {patient.previous_hospitalization || 'N/A'}</p>
+            <h3 style={{ fontSize: '1rem', borderBottom: '1px solid #ddd', paddingBottom: '0.2rem', marginBottom: '0.5rem' }}>General Medical History</h3>
+            <p style={{ margin: '0.25rem 0' }}><strong>Medical History:</strong> {patient.medical_history || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Surgical History:</strong> {patient.surgical_history || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Known Allergies:</strong> {patient.allergies || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Smoking History:</strong> {patient.smoking_history || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Alcohol Intake:</strong> {patient.alcoholic_intake || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Medications:</strong> {patient.medications || 'N/A'}</p>
+            <p style={{ margin: '0.25rem 0' }}><strong>Previous Hospitalization:</strong> {patient.previous_hospitalization || 'N/A'}</p>
           </div>
         </div>
       </div>
 
       {/* Cardiovascular History */}
       {cardio && (
-        <div className="no-break" style={{ marginBottom: '2rem' }}>
+        <div className="no-break" style={{ marginBottom: '1rem' }}>
           <h2 className="section-title">CARDIOVASCULAR HISTORY</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
-            <p style={{ margin: '0.25rem 0' }}><strong>Smoker Status:</strong> {cardio.smoker_status || 'N/A'}</p>
-            <p style={{ margin: '0.25rem 0' }}><strong>Hypertension:</strong> {cardio.hypertension ? 'Yes' : 'No'}</p>
-            <p style={{ margin: '0.25rem 0' }}><strong>Diabetes:</strong> {cardio.diabetes ? 'Yes' : 'No'}</p>
-            <p style={{ margin: '0.25rem 0' }}><strong>Family History Heart Disease:</strong> {cardio.family_history_heart_disease ? 'Yes' : 'No'}</p>
-            <p style={{ margin: '0.25rem 0' }}><strong>Previous Heart Attack:</strong> {cardio.previous_heart_attack ? 'Yes' : 'No'}</p>
-            <p style={{ margin: '0.25rem 0' }}><strong>Pacemaker Details:</strong> {cardio.pacemaker_details || 'N/A'}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+            <p style={{ margin: '0.2rem 0' }}><strong>Smoker Status:</strong> {cardio.smoker_status || 'N/A'}</p>
+            <p style={{ margin: '0.2rem 0' }}><strong>Hypertension:</strong> {cardio.hypertension ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.2rem 0' }}><strong>Diabetes:</strong> {cardio.diabetes ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.2rem 0' }}><strong>Family History Heart Disease:</strong> {cardio.family_history_heart_disease ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.2rem 0' }}><strong>Previous Heart Attack:</strong> {cardio.previous_heart_attack ? 'Yes' : 'No'}</p>
+            <p style={{ margin: '0.2rem 0' }}><strong>Pacemaker Details:</strong> {cardio.pacemaker_details || 'N/A'}</p>
           </div>
         </div>
       )}
 
-      {/* Clinical Encounters (Medical Records) */}
+      {/* Clinical Encounters (Medical Records) - Starts naturally on page 1 right below patient info */}
       {records.length > 0 && (
-        <div className="no-break">
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 className="section-title">CLINICAL ENCOUNTERS (MEDICAL RECORDS)</h2>
           <table className="print-table">
             <thead>
@@ -348,9 +424,9 @@ export default function PatientPrint() {
                   return (
                     <div style={{ fontSize: '8pt', lineHeight: '1.4' }}>
                       {uniqueParts.map((pt, i) => (
-                        <div key={i} style={{ marginBottom: i < uniqueParts.length - 1 ? '5px' : '0' }}>
+                        <div key={i} style={{ marginBottom: i < uniqueParts.length - 1 ? '4px' : '0' }}>
                           <strong style={{ color: '#0f172a', display: 'block', marginBottom: '1px' }}>{pt.header}:</strong>
-                          <span>{pt.content}</span>
+                          <div>{formatEasyRead(pt.content)}</div>
                         </div>
                       ))}
                     </div>
@@ -358,12 +434,12 @@ export default function PatientPrint() {
                 };
 
                 return (
-                  <tr key={r.record_id}>
+                  <tr key={r.record_id} style={{ pageBreakInside: 'avoid' }}>
                     <td>{r.record_date ? new Date(r.record_date).toLocaleDateString() : '-'}</td>
                     <td>{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.chief_complaint || '-'}</td>
-                    <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{r.diagnosis || '-'}</td>
-                    <td style={{ verticalAlign: 'top' }}>{renderSoapDetails()}</td>
+                    <td style={{ verticalAlign: 'top', padding: '6px' }}>{formatEasyRead(r.chief_complaint)}</td>
+                    <td style={{ verticalAlign: 'top', padding: '6px' }}>{formatEasyRead(r.diagnosis)}</td>
+                    <td style={{ verticalAlign: 'top', padding: '6px' }}>{renderSoapDetails()}</td>
                   </tr>
                 );
               })}
@@ -374,7 +450,7 @@ export default function PatientPrint() {
 
       {/* Appointment History */}
       {appointments.length > 0 && (
-        <div className="no-break">
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 className="section-title">APPOINTMENT HISTORY</h2>
           <table className="print-table">
             <thead>
@@ -387,7 +463,7 @@ export default function PatientPrint() {
             </thead>
             <tbody>
               {appointments.map(appt => (
-                <tr key={appt.appointment_id}>
+                <tr key={appt.appointment_id} style={{ pageBreakInside: 'avoid' }}>
                   <td>{appt.appointment_date ? new Date(appt.appointment_date).toLocaleString() : '-'}</td>
                   <td>{appt.doctors ? `Dr. ${appt.doctors.first_name} ${appt.doctors.last_name}${appt.doctors.specialty ? ` (${appt.doctors.specialty})` : ''}` : 'Unassigned'}</td>
                   <td style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{appt.purpose || '-'}</td>
@@ -401,7 +477,7 @@ export default function PatientPrint() {
 
       {/* Vital Signs */}
       {vitals.length > 0 && (
-        <div className="no-break">
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 className="section-title">VITAL SIGNS LOG</h2>
           <table className="print-table">
             <thead>
@@ -417,7 +493,7 @@ export default function PatientPrint() {
             </thead>
             <tbody>
               {vitals.map(v => (
-                <tr key={v.vital_id}>
+                <tr key={v.vital_id} style={{ pageBreakInside: 'avoid' }}>
                   <td>{new Date(v.record_date).toLocaleDateString()}</td>
                   <td>{v.height_cm ? `${v.height_cm} cm` : '-'}</td>
                   <td>{v.weight_kg ? `${v.weight_kg} kg` : '-'}</td>
@@ -434,7 +510,7 @@ export default function PatientPrint() {
 
       {/* Lab CBC */}
       {cbc.length > 0 && (
-        <div className="no-break">
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 className="section-title">LAB FLOW SHEET - COMPLETE BLOOD COUNT</h2>
           <div className="print-table-wrapper" style={{ width: '100%' }}>
             <table className="print-table print-table-compact">
@@ -447,7 +523,7 @@ export default function PatientPrint() {
               </thead>
               <tbody>
                 {cbc.map(l => (
-                  <tr key={l.cbc_id}>
+                  <tr key={l.cbc_id} style={{ pageBreakInside: 'avoid' }}>
                     {activeCbcCols.map(col => (
                       <td key={col.key}>
                         {col.render ? col.render(l) : (l[col.key] !== null && l[col.key] !== undefined && l[col.key] !== '' ? l[col.key] : '-')}
@@ -461,32 +537,45 @@ export default function PatientPrint() {
         </div>
       )}
 
-      {/* Lab Chemistry */}
+      {/* Lab Chemistry - Separated into structured Clinical Panels to prevent table overflow/overlap */}
       {chem.length > 0 && (
-        <div className="no-break">
+        <div style={{ marginBottom: '1.5rem' }}>
           <h2 className="section-title">BLOOD CHEMISTRY</h2>
-          <div className="print-table-wrapper" style={{ width: '100%' }}>
-            <table className="print-table print-table-compact">
-              <thead>
-                <tr>
-                  {activeChemCols.map(col => (
-                    <th key={col.key}>{col.label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {chem.map(l => (
-                  <tr key={l.chem_id}>
-                    {activeChemCols.map(col => (
-                      <td key={col.key}>
-                        {col.render ? col.render(l) : (l[col.key] !== null && l[col.key] !== undefined && l[col.key] !== '' ? l[col.key] : '-')}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {activeChemPanels.length === 0 ? (
+            <p style={{ fontSize: '0.85rem', color: '#666' }}>No recorded chemistry test values.</p>
+          ) : (
+            activeChemPanels.map(panel => (
+              <div key={panel.title} className="no-break" style={{ marginBottom: '1rem' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#1e293b', marginBottom: '0.35rem', borderLeft: '3px solid #0d9488', paddingLeft: '0.5rem' }}>
+                  {panel.title}
+                </div>
+                <div className="print-table-wrapper" style={{ width: '100%' }}>
+                  <table className="print-table print-table-compact">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '12%', textAlign: 'left' }}>DATE</th>
+                        {panel.columns.map(col => (
+                          <th key={col.key}>{col.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {panel.rows.map(l => (
+                        <tr key={l.chem_id}>
+                          <td style={{ textAlign: 'left' }}>{new Date(l.test_date).toLocaleDateString()}</td>
+                          {panel.columns.map(col => (
+                            <td key={col.key}>
+                              {l[col.key] !== null && l[col.key] !== undefined && l[col.key] !== '' ? l[col.key] : '-'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
 

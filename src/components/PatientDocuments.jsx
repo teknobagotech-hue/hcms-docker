@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, Printer } from 'lucide-react';
-import ConfirmModal from './ConfirmModal';
+import { Plus, Edit, Eye, Printer } from 'lucide-react';
 import TablePrintControls from './TablePrintControls';
 import DocumentPrintModal from './DocumentPrintModal';
 
@@ -11,9 +10,6 @@ export default function PatientDocuments({ patientId, patient }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [patientData, setPatientData] = useState(patient || null);
-  
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
 
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -65,16 +61,6 @@ export default function PatientDocuments({ patientId, patient }) {
       setTotalCount(count);
     }
     setLoading(false);
-  };
-
-  const handleDelete = async () => {
-    const { error } = await supabase.from('medical_documents').delete().eq('document_id', selectedId);
-    if (error) toast.error('Failed to delete record');
-    else {
-      toast.success('Record deleted');
-      fetchRecords();
-    }
-    setModalOpen(false);
   };
 
   const handleOpenPrint = (doc = null, type = 'Medical Certificate') => {
@@ -139,9 +125,6 @@ export default function PatientDocuments({ patientId, patient }) {
                       <Link to={`/patients/${patientId}/lab/docs/edit/${rec.document_id}`} className="icon-btn edit" title="Edit Record">
                         <Edit size={16} />
                       </Link>
-                      <button className="icon-btn delete" title="Delete Record" onClick={() => { setSelectedId(rec.document_id); setModalOpen(true); }}>
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -160,16 +143,6 @@ export default function PatientDocuments({ patientId, patient }) {
           <button className="page-btn" disabled={page === Math.ceil(totalCount / limit)} onClick={() => setPage(page + 1)}>Next</button>
         </div>
       )}
-
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onCancel={() => setModalOpen(false)}
-        title={`Delete Document Record`}
-        message={`Are you sure you want to delete this document record?`}
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
-      />
 
       <DocumentPrintModal
         isOpen={printModalOpen}

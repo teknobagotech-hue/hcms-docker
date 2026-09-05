@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, Archive, Printer } from 'lucide-react';
+import { Plus, Edit, Eye, Archive, Printer } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import TablePrintControls from './TablePrintControls';
 import { printAppointmentSlip } from '../utils/printDocumentTemplates';
@@ -18,7 +18,7 @@ export default function PatientAppointments({ patientId, patient }) {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState(null);
-  const [actionType, setActionType] = useState('delete');
+  const [actionType, setActionType] = useState('cancel');
 
   const printColumns = [
     { label: 'Date & Time', render: (r) => new Date(r.appointment_date).toLocaleString() },
@@ -75,19 +75,7 @@ export default function PatientAppointments({ patientId, patient }) {
   const handleConfirmAction = async () => {
     if (!selectedAppt) return;
 
-    if (actionType === 'delete') {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('appointment_id', selectedAppt.appointment_id);
-
-      if (error) {
-        toast.error('Failed to delete appointment');
-      } else {
-        toast.success('Appointment deleted');
-        fetchAppointments();
-      }
-    } else if (actionType === 'cancel') {
+    if (actionType === 'cancel') {
       const { error } = await supabase
         .from('appointments')
         .update({ status: 'cancelled' })
@@ -170,9 +158,6 @@ export default function PatientAppointments({ patientId, patient }) {
                           <Archive size={18} />
                         </button>
                       )}
-                      <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', appt)}>
-                        <Trash2 size={18} />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -195,10 +180,10 @@ export default function PatientAppointments({ patientId, patient }) {
       <ConfirmModal 
         isOpen={modalOpen} 
         onCancel={() => setModalOpen(false)}
-        title={actionType === 'delete' ? 'Delete Appointment' : 'Cancel Appointment'}
-        message={actionType === 'delete' ? 'Are you sure you want to delete this appointment?' : 'Are you sure you want to cancel this scheduled appointment?'}
-        confirmText={actionType === 'delete' ? 'Delete' : 'Cancel Appointment'}
-        confirmType={actionType === 'delete' ? 'danger' : 'warning'}
+        title="Cancel Appointment"
+        message="Are you sure you want to cancel this scheduled appointment?"
+        confirmText="Cancel Appointment"
+        confirmType="warning"
         onConfirm={handleConfirmAction}
       />
     </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Printer, Receipt, Truck, Calendar, FileText, Tag } from 'lucide-react';
+import { ArrowLeft, Edit, Archive, Printer, Receipt, Truck, Calendar, FileText, Tag } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printStockReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -14,7 +14,7 @@ export default function StockReceiptView() {
   const [receiptItems, setReceiptItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Delete modal state
+  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
 
@@ -67,28 +67,28 @@ export default function StockReceiptView() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleArchive = async () => {
     const { error } = await supabase
       .from('stock_receipts')
-      .delete()
+      .update({ status: 'archived' })
       .eq('receipt_id', id);
 
     if (error) {
-      toast.error('Failed to delete receipt.');
+      toast.error('Failed to archive receipt.');
     } else {
-      toast.success('Stock receipt deleted successfully');
-      navigate('/inventory/receipts');
+      toast.success('Stock receipt archived successfully');
+      fetchStockReceiptDetails();
     }
     setModalOpen(false);
   };
 
   const openConfirmModal = () => {
     setModalConfig({
-      title: 'Delete Stock Receipt',
-      message: `Are you sure you want to permanently delete receipt "${receipt.reference_number || receipt.receipt_id}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      confirmType: 'danger',
-      onConfirm: handleDelete
+      title: 'Archive Stock Receipt',
+      message: `Are you sure you want to archive receipt "${receipt.reference_number || receipt.receipt_id}"?`,
+      confirmText: 'Archive',
+      confirmType: 'warning',
+      onConfirm: handleArchive
     });
     setModalOpen(true);
   };
@@ -132,9 +132,11 @@ export default function StockReceiptView() {
             <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Edit size={16} /> Edit
             </Link>
-            <button className="btn btn-danger" onClick={openConfirmModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Trash2 size={16} /> Delete
-            </button>
+            {receipt.status !== 'archived' && (
+              <button className="btn btn-warning" onClick={openConfirmModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Archive size={16} /> Archive
+              </button>
+            )}
           </div>
         </div>
 

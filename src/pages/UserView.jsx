@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase, supabaseAdmin } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Archive, Calendar, UserCog, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Edit, Archive, Calendar, UserCog, ShieldCheck, CheckCircle } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -21,7 +21,8 @@ export default function UserView() {
   }, [id]);
 
   const fetchUser = async () => {
-    const { data, error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from('user_profiles')
       .select('*')
       .eq('id', id)
@@ -37,7 +38,8 @@ export default function UserView() {
   };
 
   const handleArchive = async () => {
-    const { error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { error } = await client
       .from('user_profiles')
       .update({ status: 'inactive' })
       .eq('id', id);
@@ -51,17 +53,18 @@ export default function UserView() {
     setModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
+  const handleActivate = async () => {
+    const client = supabaseAdmin || supabase;
+    const { error } = await client
       .from('user_profiles')
-      .delete()
+      .update({ status: 'active' })
       .eq('id', id);
 
     if (error) {
-      toast.error('Failed to delete user profile');
+      toast.error('Failed to activate user');
     } else {
-      toast.success('User profile deleted successfully');
-      navigate('/users');
+      toast.success('User activated successfully');
+      fetchUser();
     }
     setModalOpen(false);
   };
@@ -76,13 +79,13 @@ export default function UserView() {
         confirmType: 'warning',
         onConfirm: handleArchive
       });
-    } else if (action === 'delete') {
+    } else if (action === 'activate') {
       setModalConfig({
-        title: 'Delete User',
-        message: `Are you sure you want to permanently delete ${name}'s profile?`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: handleDelete
+        title: 'Activate User',
+        message: `Are you sure you want to activate ${name}?`,
+        confirmText: 'Activate',
+        confirmType: 'primary',
+        onConfirm: handleActivate
       });
     }
     setModalOpen(true);
@@ -111,14 +114,15 @@ export default function UserView() {
             <Link to={`/users/edit/${user.id}`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Edit size={16} /> Edit
             </Link>
-            {user.status !== 'inactive' && (
+            {user.status === 'inactive' ? (
+              <button className="btn btn-success" onClick={() => openConfirmModal('activate')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#16A34A', color: '#fff' }}>
+                <CheckCircle size={16} /> Activate
+              </button>
+            ) : (
               <button className="btn btn-warning" onClick={() => openConfirmModal('archive')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Archive size={16} /> Archive
               </button>
             )}
-            <button className="btn btn-danger" onClick={() => openConfirmModal('delete')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Trash2 size={16} /> Delete
-            </button>
           </div>
         </div>
 
@@ -132,11 +136,11 @@ export default function UserView() {
                 {user.full_name || 'Unnamed User'}
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ color: 'var(--text-gray)', fontSize: '1.125rem', fontWeight: 500 }}>
-                  {user.role || 'Staff'}
+                <span style={{ color: 'var(--text-gray)', fontSize: '1.125rem', fontWeight: 500, textTransform: 'capitalize' }}>
+                  {(user.role || 'Staff').replace('_', ' ')}
                 </span>
-                <span className={`badge ${user.status === 'active' || !user.status ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' || !user.status ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' || !user.status ? '#1D4ED8' : '#64748B' }}>
-                  {user.status ? user.status.toUpperCase() : 'ACTIVE'}
+                <span className={`badge ${user.status === 'active' || !user.status ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' || !user.status ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' || !user.status ? '#1D4ED8' : '#64748B', textTransform: 'uppercase' }}>
+                  {user.status || 'ACTIVE'}
                 </span>
               </div>
             </div>

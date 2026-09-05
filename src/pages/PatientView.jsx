@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Archive, UserRound, Phone, MapPin, Calendar, HeartPulse, Activity, FileText, FlaskConical, Stethoscope, FileSignature, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Edit, Archive, UserRound, Phone, MapPin, Calendar, HeartPulse, Activity, FileText, FlaskConical, Stethoscope, FileSignature, ShieldCheck } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import PatientAppointments from '../components/PatientAppointments';
 import PatientVitals from '../components/PatientVitals';
@@ -65,21 +65,6 @@ export default function PatientView() {
     setModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('patients')
-      .delete()
-      .eq('patient_id', id);
-
-    if (error) {
-      toast.error('Failed to delete patient. Ensure all clinical records are deleted first.');
-    } else {
-      toast.success('Patient deleted successfully');
-      navigate('/patients');
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action) => {
     const fullName = `${patient.first_name} ${patient.last_name}`;
     if (action === 'archive') {
@@ -89,14 +74,6 @@ export default function PatientView() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: handleArchive
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Patient',
-        message: `Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: handleDelete
       });
     }
     setModalOpen(true);

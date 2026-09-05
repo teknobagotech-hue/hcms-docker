@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Archive, Trash2, Plus, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Edit, Archive, Plus, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import TablePrintControls from '../../components/TablePrintControls';
 import '../../index.css';
@@ -123,21 +123,6 @@ export default function PatientInsuranceList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('patient_insurance')
-      .delete()
-      .eq('patient_insurance_id', id);
-
-    if (error) {
-      toast.error('Failed to delete patient insurance record');
-    } else {
-      toast.success('Patient insurance deleted successfully');
-      fetchPolicies();
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action, policy) => {
     const patientName = policy.patients ? `${policy.patients.first_name} ${policy.patients.last_name}` : 'Patient';
     if (action === 'toggle-status') {
@@ -148,14 +133,6 @@ export default function PatientInsuranceList() {
         confirmText: isArchiving ? 'Deactivate' : 'Activate',
         confirmType: isArchiving ? 'warning' : 'primary',
         onConfirm: () => handleArchive(policy.patient_insurance_id, policy.status)
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Insurance Record',
-        message: `Are you sure you want to permanently delete policy "${policy.insurance_number}" for ${patientName}?`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(policy.patient_insurance_id)
       });
     }
     setModalOpen(true);
@@ -292,9 +269,6 @@ export default function PatientInsuranceList() {
                             onClick={() => openConfirmModal('toggle-status', pol)}
                           >
                             {pol.status === 'active' ? <XCircle size={18} /> : <CheckCircle size={18} />}
-                          </button>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', pol)}>
-                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>

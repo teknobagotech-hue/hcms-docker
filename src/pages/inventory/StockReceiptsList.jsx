@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Receipt, Eye, Printer } from 'lucide-react';
+import { Search, Edit, Archive, Plus, Receipt, Eye, Printer } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printStockReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -85,29 +85,29 @@ export default function StockReceiptsList() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleArchive = async (id) => {
     const { error } = await supabase
       .from('stock_receipts')
-      .delete()
+      .update({ status: 'archived' })
       .eq('receipt_id', id);
 
     if (error) {
-      toast.error('Failed to delete receipt.');
+      toast.error('Failed to archive receipt.');
     } else {
-      toast.success('Receipt deleted successfully');
+      toast.success('Receipt archived successfully');
       fetchReceipts();
     }
     setModalOpen(false);
   };
 
   const openConfirmModal = (action, receipt) => {
-    if (action === 'delete') {
+    if (action === 'archive') {
       setModalConfig({
-        title: 'Delete Stock Receipt',
-        message: `Are you sure you want to permanently delete receipt "${receipt.reference_number || receipt.receipt_id}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(receipt.receipt_id)
+        title: 'Archive Stock Receipt',
+        message: `Are you sure you want to archive receipt "${receipt.reference_number || receipt.receipt_id}"?`,
+        confirmText: 'Archive',
+        confirmType: 'warning',
+        onConfirm: () => handleArchive(receipt.receipt_id)
       });
       setModalOpen(true);
     }
@@ -192,9 +192,11 @@ export default function StockReceiptsList() {
                           <Link to={`/inventory/receipts/edit/${receipt.receipt_id}`} className="icon-btn edit" title="Edit">
                             <Edit size={18} />
                           </Link>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', receipt)}>
-                            <Trash2 size={18} />
-                          </button>
+                          {receipt.status !== 'archived' && (
+                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', receipt)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

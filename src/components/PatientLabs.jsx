@@ -2,17 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Plus, Edit, Trash2, Eye, FileText, FlaskConical, Stethoscope, Image as ImageIcon, ExternalLink } from 'lucide-react';
-import ConfirmModal from './ConfirmModal';
+import { Plus, Edit, Eye, FileText, FlaskConical, Stethoscope, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import TablePrintControls from './TablePrintControls';
 
 export default function PatientLabs({ patientId, patient }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [patientData, setPatientData] = useState(patient || null);
-  
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -88,16 +84,6 @@ export default function PatientLabs({ patientId, patient }) {
     const term = searchTerm.toLowerCase().trim();
     return Object.values(rec).some(val => val !== null && val !== undefined && String(val).toLowerCase().includes(term));
   });
-
-  const handleDelete = async () => {
-    const { error } = await supabase.from(currentCat.table).delete().eq(currentCat.idField, selectedId);
-    if (error) toast.error('Failed to delete record');
-    else {
-      toast.success('Record deleted');
-      fetchRecords();
-    }
-    setModalOpen(false);
-  };
 
   const getColCount = () => {
     switch (activeCategory) {
@@ -460,9 +446,6 @@ export default function PatientLabs({ patientId, patient }) {
                       <Link to={`/patients/${patientId}/lab/${currentCat.id}/edit/${rec[currentCat.idField]}`} className="icon-btn edit">
                         <Edit size={16} />
                       </Link>
-                      <button className="icon-btn delete" onClick={() => { setSelectedId(rec[currentCat.idField]); setModalOpen(true); }}>
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -497,16 +480,6 @@ export default function PatientLabs({ patientId, patient }) {
           </div>
         </div>
       )}
-
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onCancel={() => setModalOpen(false)}
-        title={`Delete ${currentCat.label} Record`}
-        message={`Are you sure you want to delete this ${currentCat.label} record?`}
-        confirmText="Delete"
-        confirmType="danger"
-        onConfirm={handleDelete}
-      />
     </div>
   );
 }

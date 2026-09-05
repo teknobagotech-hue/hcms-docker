@@ -488,6 +488,28 @@ export default function RecordView() {
     const doctorName = data.doctors ? `Dr. ${data.doctors.first_name || ''} ${data.doctors.last_name || ''}`.trim() : null;
     const hasVitals = data.blood_pressure || data.heart_rate || data.temperature_c || data.spo2 || data.weight_kg || data.bmi;
 
+    const formatEasyRead = (text, defaultText = '-') => {
+      if (!text || typeof text !== 'string') return text || defaultText;
+
+      // Strip leading section labels if present (e.g. "Subjective: ")
+      let cleanText = text.replace(/^(Subjective|Objective|Assessment|Plan|Treatment):\s*/i, '');
+
+      // Split by newlines, semicolons, or periods/commas followed by a space and a letter
+      const parts = cleanText.split(/\n|;\s*|\.\s+(?=[a-zA-Z])|,\s+(?=[a-zA-Z])/).map(p => p.trim()).filter(Boolean);
+
+      if (parts.length > 1) {
+        return (
+          <ul style={{ margin: '0', paddingLeft: '1.25rem', listStyleType: 'disc' }}>
+            {parts.map((part, idx) => {
+              let cleanPart = part.replace(/^[-•*]\s*/, '');
+              return <li key={idx} style={{ marginBottom: '3px', lineHeight: '1.5' }}>{cleanPart}</li>;
+            })}
+          </ul>
+        );
+      }
+      return cleanText;
+    };
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {/* Top Metric Cards */}
@@ -506,8 +528,9 @@ export default function RecordView() {
           </div>
           <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '0.875rem', padding: '1.25rem', gridColumn: 'span 2' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Primary Diagnosis</span>
-            <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#0D9488', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Activity size={18} color="#0d9488" /> {data.diagnosis || 'Clinical Assessment Completed'}
+            <div style={{ fontSize: '1rem', fontWeight: 600, color: '#0D9488', marginTop: '0.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+              <Activity size={18} color="#0d9488" style={{ flexShrink: 0, marginTop: '3px' }} />
+              <div>{data.diagnosis ? formatEasyRead(data.diagnosis) : 'Clinical Assessment Completed'}</div>
             </div>
           </div>
         </div>
@@ -520,20 +543,20 @@ export default function RecordView() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
             <div>
               <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Chief Complaint *</span>
-              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#FFFBEB', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #FDE68A', fontWeight: 500, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.chief_complaint || 'None specified'}
+              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#FFFBEB', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #FDE68A', fontWeight: 500, lineHeight: '1.6' }}>
+                {formatEasyRead(data.chief_complaint, 'None specified')}
               </div>
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Diagnosis</span>
-              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#F0FDFA', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #99F6E4', fontWeight: 600, lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.diagnosis || 'None'}
+              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#F0FDFA', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #99F6E4', fontWeight: 600, lineHeight: '1.6' }}>
+                {formatEasyRead(data.diagnosis, 'None')}
               </div>
             </div>
             <div>
               <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Treatment Provided</span>
-              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #E2E8F0', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.treatment || data.treatment_plan || 'No treatment provided documented.'}
+              <div style={{ color: '#0F172A', marginTop: '0.35rem', fontSize: '0.95rem', backgroundColor: '#F8FAFC', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #E2E8F0', lineHeight: '1.6' }}>
+                {formatEasyRead(data.treatment || data.treatment_plan, 'No treatment provided documented.')}
               </div>
             </div>
           </div>
@@ -551,8 +574,8 @@ export default function RecordView() {
                 <span style={{ backgroundColor: '#0D9488', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '0.375rem' }}>S</span>
                 <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.95rem' }}>Subjective</span>
               </div>
-              <div style={{ color: data.subjective ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.subjective || 'No subjective notes documented.'}
+              <div style={{ color: data.subjective ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                {data.subjective ? formatEasyRead(data.subjective) : 'No subjective notes documented.'}
               </div>
             </div>
 
@@ -562,8 +585,8 @@ export default function RecordView() {
                 <span style={{ backgroundColor: '#2563EB', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '0.375rem' }}>O</span>
                 <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.95rem' }}>Objective</span>
               </div>
-              <div style={{ color: data.objective ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.objective || 'No objective findings documented.'}
+              <div style={{ color: data.objective ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                {data.objective ? formatEasyRead(data.objective) : 'No objective findings documented.'}
               </div>
             </div>
 
@@ -573,8 +596,8 @@ export default function RecordView() {
                 <span style={{ backgroundColor: '#D97706', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '0.375rem' }}>A</span>
                 <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.95rem' }}>Assessment</span>
               </div>
-              <div style={{ color: data.assessment ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.assessment || 'No assessment notes documented.'}
+              <div style={{ color: data.assessment ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                {data.assessment ? formatEasyRead(data.assessment) : 'No assessment notes documented.'}
               </div>
             </div>
 
@@ -584,8 +607,8 @@ export default function RecordView() {
                 <span style={{ backgroundColor: '#16A34A', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '0.375rem' }}>P</span>
                 <span style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.95rem' }}>Plan</span>
               </div>
-              <div style={{ color: data.plan ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-                {data.plan || 'No plan documented.'}
+              <div style={{ color: data.plan ? '#0F172A' : '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                {data.plan ? formatEasyRead(data.plan) : 'No plan documented.'}
               </div>
             </div>
           </div>

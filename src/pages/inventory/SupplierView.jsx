@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Archive, Truck, User, Phone, Mail, MapPin, Calendar, Receipt, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Edit, Archive, Truck, User, Phone, Mail, MapPin, Calendar, Receipt, ExternalLink } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import '../../index.css';
 
@@ -65,21 +65,6 @@ export default function SupplierView() {
     setModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('suppliers')
-      .delete()
-      .eq('supplier_id', id);
-
-    if (error) {
-      toast.error('Failed to delete supplier. They may be linked to stock receipts.');
-    } else {
-      toast.success('Supplier deleted successfully');
-      navigate('/inventory/suppliers');
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action) => {
     if (action === 'archive') {
       setModalConfig({
@@ -88,14 +73,6 @@ export default function SupplierView() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: handleArchive
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Supplier',
-        message: `Are you sure you want to permanently delete "${supplier.supplier_name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: handleDelete
       });
     }
     setModalOpen(true);
@@ -130,9 +107,6 @@ export default function SupplierView() {
                 <Archive size={16} /> Archive
               </button>
             )}
-            <button className="btn btn-danger" onClick={() => openConfirmModal('delete')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Trash2 size={16} /> Delete
-            </button>
           </div>
         </div>
 

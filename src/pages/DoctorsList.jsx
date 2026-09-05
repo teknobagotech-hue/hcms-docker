@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, Archive, Trash2, Plus } from 'lucide-react';
+import { Search, Eye, Edit, Archive, Plus } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -74,21 +74,6 @@ export default function DoctorsList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('doctors')
-      .delete()
-      .eq('doctor_id', id);
-
-    if (error) {
-      toast.error('Failed to delete doctor. They may have active records.');
-    } else {
-      toast.success('Doctor deleted successfully');
-      fetchDoctors();
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action, doc) => {
     const fullName = `Dr. ${doc.first_name} ${doc.last_name}`;
     if (action === 'archive') {
@@ -98,14 +83,6 @@ export default function DoctorsList() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: () => handleArchive(doc.doctor_id)
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Doctor',
-        message: `Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(doc.doctor_id)
       });
     }
     setModalOpen(true);
@@ -197,9 +174,6 @@ export default function DoctorsList() {
                               <Archive size={18} />
                             </button>
                           )}
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', doc)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>

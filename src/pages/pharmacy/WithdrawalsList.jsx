@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, ShoppingCart, Printer, Eye } from 'lucide-react';
+import { Search, Edit, Archive, Plus, ShoppingCart, Printer, Eye } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printPharmacyReceipt } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -91,29 +91,29 @@ export default function WithdrawalsList() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleCancel = async (id) => {
     const { error } = await supabase
       .from('inventory_withdrawals')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('withdrawal_id', id);
 
     if (error) {
-      toast.error('Failed to delete record.');
+      toast.error('Failed to cancel sale record.');
     } else {
-      toast.success('Record deleted successfully');
+      toast.success('Sale record cancelled successfully');
       fetchWithdrawals();
     }
     setModalOpen(false);
   };
 
   const openConfirmModal = (action, withdrawal) => {
-    if (action === 'delete') {
+    if (action === 'cancel') {
       setModalConfig({
-        title: 'Delete Sale Record',
-        message: `Are you sure you want to permanently delete this record? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(withdrawal.withdrawal_id)
+        title: 'Cancel / Archive Sale Record',
+        message: `Are you sure you want to cancel sale record #${withdrawal.withdrawal_id}?`,
+        confirmText: 'Cancel Sale',
+        confirmType: 'warning',
+        onConfirm: () => handleCancel(withdrawal.withdrawal_id)
       });
       setModalOpen(true);
     }
@@ -212,9 +212,11 @@ export default function WithdrawalsList() {
                           <button className="icon-btn" style={{ color: 'var(--text-gray)' }} title="Print Receipt" onClick={() => handlePrintReceipt(w)}>
                             <Printer size={18} />
                           </button>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', w)}>
-                            <Trash2 size={18} />
-                          </button>
+                          {w.status !== 'cancelled' && (
+                            <button className="icon-btn archive" title="Cancel / Archive Sale" onClick={() => openConfirmModal('cancel', w)}>
+                              <Archive size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase, supabaseAdmin } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, Archive, Trash2, Plus, UserCog } from 'lucide-react';
+import { Search, Eye, Edit, Archive, Plus, UserCog, CheckCircle } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -29,7 +29,8 @@ export default function UsersList() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    let query = supabase
+    const client = supabaseAdmin || supabase;
+    let query = client
       .from('user_profiles')
       .select('*', { count: 'exact' });
 
@@ -38,7 +39,7 @@ export default function UsersList() {
     }
 
     if (roleFilter !== 'all') {
-      query = query.eq('role', roleFilter);
+      query = query.ilike('role', roleFilter);
     }
 
     const from = (page - 1) * limit;
@@ -52,20 +53,21 @@ export default function UsersList() {
       toast.error('Failed to load users');
       console.error(error);
     } else {
-      setUsers(data);
-      setTotalCount(count);
+      setUsers(data || []);
+      setTotalCount(count || 0);
     }
     setLoading(false);
   };
 
   const handleArchive = async (id) => {
-    const { error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { error } = await client
       .from('user_profiles')
       .update({ status: 'inactive' })
       .eq('id', id);
 
     if (error) {
-      toast.error('Failed to archive user (Ensure status column exists)');
+      toast.error('Failed to archive user');
     } else {
       toast.success('User archived successfully');
       fetchUsers();
@@ -73,18 +75,17 @@ export default function UsersList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    // Note: Deleting from user_profiles might fail if there are foreign keys (e.g. doctors table).
-    // And it doesn't delete the user from auth.users unless we use supabaseAdmin.
-    const { error } = await supabase
+  const handleActivate = async (id) => {
+    const client = supabaseAdmin || supabase;
+    const { error } = await client
       .from('user_profiles')
-      .delete()
+      .update({ status: 'active' })
       .eq('id', id);
 
     if (error) {
-      toast.error('Failed to delete user. They may have active records.');
+      toast.error('Failed to activate user');
     } else {
-      toast.success('User profile deleted successfully');
+      toast.success('User activated successfully');
       fetchUsers();
     }
     setModalOpen(false);
@@ -92,21 +93,22 @@ export default function UsersList() {
 
   const openConfirmModal = (action, user) => {
     const name = user.full_name || 'Unnamed User';
+    const userId = user.id || user.user_id;
     if (action === 'archive') {
       setModalConfig({
         title: 'Archive User',
         message: `Are you sure you want to archive ${name}?`,
         confirmText: 'Archive',
         confirmType: 'warning',
-        onConfirm: () => handleArchive(user.id)
+        onConfirm: () => handleArchive(userId)
       });
-    } else if (action === 'delete') {
+    } else if (action === 'activate') {
       setModalConfig({
-        title: 'Delete User',
-        message: `Are you sure you want to permanently delete ${name}'s profile? (This does not delete their authentication record).`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(user.id)
+        title: 'Activate User',
+        message: `Are you sure you want to activate ${name}?`,
+        confirmText: 'Activate',
+        confirmType: 'primary',
+        onConfirm: () => handleActivate(userId)
       });
     }
     setModalOpen(true);
@@ -152,10 +154,13 @@ export default function UsersList() {
               onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
             >
               <option value="all">All Roles</option>
-              <option value="Admin">Admin</option>
-              <option value="Doctor">Doctor</option>
-              <option value="Nurse">Nurse</option>
-              <option value="Staff">Staff</option>
+              <option value="admin">Administrator</option>
+              <option value="doctor">Doctor</option>
+              <option value="nurse">Nurse</option>
+              <option value="pharmacist">Pharmacist</option>
+              <option value="receptionist">Receptionist</option>
+              <option value="lab_technician">Lab Technician</option>
+              <option value="staff">Staff</option>
             </select>
           </div>
 
@@ -180,44 +185,57 @@ export default function UsersList() {
                     <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>No users found.</td>
                   </tr>
                 ) : (
-                  users.map((user, index) => (
-                    <tr key={user.user_id || user.id || index}>
-                      <td style={{ fontWeight: 500 }}>
-                        {user.full_name || 'N/A'}
-                      </td>
-                      <td>
-                        <span className="badge" style={{ backgroundColor: '#E2E8F0', color: '#334155' }}>
-                          {user.roles?.role_name || user.role || 'Staff'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${user.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' ? '#1D4ED8' : '#64748B' }}>
-                          {user.status || 'active'}
-                        </span>
-                      </td>
-                      <td style={{ color: 'var(--text-gray)' }}>
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
-                      </td>
-                      <td>
-                        <div className="table-actions">
-                          <Link to={`/users/view/${user.user_id}`} className="icon-btn view" title="View Details">
-                            <Eye size={18} />
-                          </Link>
-                          <Link to={`/users/edit/${user.user_id}`} className="icon-btn edit" title="Edit User">
-                            <Edit size={18} />
-                          </Link>
-                          {user.status === 'active' && (
-                            <button className="icon-btn archive" title="Archive" onClick={() => openConfirmModal('archive', user)}>
-                              <Archive size={18} />
-                            </button>
-                          )}
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', user)}>
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  users.map((user, index) => {
+                    const userId = user.id || user.user_id;
+                    return (
+                      <tr key={userId || index}>
+                        <td style={{ fontWeight: 500 }}>
+                          {user.full_name || 'N/A'}
+                        </td>
+                        <td>
+                          <span className="badge" style={{ backgroundColor: '#E2E8F0', color: '#334155', textTransform: 'capitalize' }}>
+                            {(user.roles?.role_name || user.role || 'Staff').replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${user.status === 'active' ? 'badge-blue' : ''}`} style={{ backgroundColor: user.status === 'active' ? '#DBEAFE' : '#F1F5F9', color: user.status === 'active' ? '#1D4ED8' : '#64748B', textTransform: 'capitalize' }}>
+                            {user.status || 'active'}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-gray)' }}>
+                          {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
+                        </td>
+                        <td>
+                          <div className="table-actions">
+                            <Link to={`/users/view/${userId}`} className="icon-btn view" title="View Details">
+                              <Eye size={18} />
+                            </Link>
+                            <Link to={`/users/edit/${userId}`} className="icon-btn edit" title="Edit User">
+                              <Edit size={18} />
+                            </Link>
+                            {user.status === 'inactive' ? (
+                              <button 
+                                className="icon-btn activate" 
+                                title="Activate User" 
+                                style={{ color: '#16A34A' }} 
+                                onClick={() => openConfirmModal('activate', user)}
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                            ) : (
+                              <button 
+                                className="icon-btn archive" 
+                                title="Archive User" 
+                                onClick={() => openConfirmModal('archive', user)}
+                              >
+                                <Archive size={18} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

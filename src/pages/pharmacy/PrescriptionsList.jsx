@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, FileSignature, Eye, Printer, Archive } from 'lucide-react';
+import { Search, Edit, Plus, FileSignature, Eye, Printer, Archive } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import { printPrescription } from '../../utils/printDocumentTemplates';
 import '../../index.css';
@@ -60,29 +60,29 @@ export default function PrescriptionsList() {
     setLoading(false);
   };
 
-  const handleDelete = async (id) => {
+  const handleCancelPrescription = async (id) => {
     const { error } = await supabase
       .from('prescriptions')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('prescription_id', id);
 
     if (error) {
-      toast.error('Failed to delete prescription.');
+      toast.error('Failed to cancel prescription.');
     } else {
-      toast.success('Prescription deleted successfully');
+      toast.success('Prescription cancelled successfully');
       fetchPrescriptions();
     }
     setModalOpen(false);
   };
 
   const openConfirmModal = (action, prescription) => {
-    if (action === 'delete') {
+    if (action === 'cancel') {
       setModalConfig({
-        title: 'Delete Prescription',
-        message: `Are you sure you want to permanently delete this prescription?`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(prescription.prescription_id)
+        title: 'Cancel Prescription',
+        message: `Are you sure you want to cancel this prescription?`,
+        confirmText: 'Cancel Prescription',
+        confirmType: 'warning',
+        onConfirm: () => handleCancelPrescription(prescription.prescription_id)
       });
       setModalOpen(true);
     }
@@ -215,13 +215,6 @@ export default function PrescriptionsList() {
                               <Archive size={18} />
                             </button>
                           )}
-                          <button 
-                            className="icon-btn delete" 
-                            title="Delete Prescription" 
-                            onClick={() => openConfirmModal('delete', rx)}
-                          >
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>

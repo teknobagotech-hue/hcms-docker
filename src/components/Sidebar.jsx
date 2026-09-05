@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, UserRound, ShieldPlus, Pill, FileSignature, Receipt, ShieldCheck, Library, Truck, Package, UserCog, Menu, ShoppingCart, Activity, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, UserRound, ShieldPlus, Pill, FileSignature, Receipt, ShieldCheck, Library, Truck, Package, UserCog, Menu, ShoppingCart, Activity, Shield, BarChart3, TrendingUp, Boxes } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -49,6 +49,13 @@ export default function Sidebar({ isOpen, onClose }) {
         { name: 'Billing Records', icon: <Receipt className="sidebar-icon" />, path: '/billing/records', roles: ['admin', 'receptionist'] },
         { name: 'Insurance Providers', icon: <ShieldPlus className="sidebar-icon" />, path: '/billing/insurance', roles: ['admin', 'receptionist'] },
         { name: 'Patient Insurance', icon: <ShieldCheck className="sidebar-icon" />, path: '/billing/patient-insurance', roles: ['admin', 'receptionist', 'doctor'] },
+      ],
+    },
+    {
+      title: 'REPORTS & ANALYTICS',
+      items: [
+        { name: 'Sales Reports', icon: <TrendingUp className="sidebar-icon" />, path: '/reports/sales', roles: ['admin', 'pharmacist', 'doctor', 'receptionist'] },
+        { name: 'Inventory Reports', icon: <Boxes className="sidebar-icon" />, path: '/reports/inventory', roles: ['admin', 'pharmacist', 'doctor'] },
       ],
     }
   ];

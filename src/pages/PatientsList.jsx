@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Eye, Edit, Archive, Trash2, Plus, Users } from 'lucide-react';
+import { Search, Eye, Edit, Archive, Plus, Users } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -73,21 +73,6 @@ export default function PatientsList() {
     setModalOpen(false);
   };
 
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('patients')
-      .delete()
-      .eq('patient_id', id);
-
-    if (error) {
-      toast.error('Failed to delete patient. They have active clinical records.');
-    } else {
-      toast.success('Patient deleted successfully');
-      fetchPatients();
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action, patient) => {
     const fullName = `${patient.first_name} ${patient.last_name}`;
     if (action === 'archive') {
@@ -97,14 +82,6 @@ export default function PatientsList() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: () => handleArchive(patient.patient_id)
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Patient',
-        message: `Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(patient.patient_id)
       });
     }
     setModalOpen(true);
@@ -207,9 +184,6 @@ export default function PatientsList() {
                               <Archive size={18} />
                             </button>
                           )}
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', patient)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>

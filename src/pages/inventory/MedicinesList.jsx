@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import toast from 'react-hot-toast';
-import { Search, Edit, Trash2, Plus, Pill } from 'lucide-react';
-import ConfirmModal from '../../components/ConfirmModal';
+import { Search, Edit, Plus, Pill } from 'lucide-react';
 import '../../index.css';
 
 export default function MedicinesList() {
@@ -17,10 +16,6 @@ export default function MedicinesList() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const limit = 10;
-
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalConfig, setModalConfig] = useState(null);
 
   useEffect(() => {
     fetchMedicines();
@@ -51,34 +46,6 @@ export default function MedicinesList() {
       setTotalCount(count);
     }
     setLoading(false);
-  };
-
-  const handleDelete = async (id) => {
-    const { error } = await supabase
-      .from('medicines')
-      .delete()
-      .eq('medicine_id', id);
-
-    if (error) {
-      toast.error('Failed to delete medicine. It may be in use.');
-    } else {
-      toast.success('Medicine deleted successfully');
-      fetchMedicines();
-    }
-    setModalOpen(false);
-  };
-
-  const openConfirmModal = (action, medicine) => {
-    if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Medicine',
-        message: `Are you sure you want to permanently delete "${medicine.medicine_name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: () => handleDelete(medicine.medicine_id)
-      });
-      setModalOpen(true);
-    }
   };
 
   const totalPages = Math.ceil(totalCount / limit);
@@ -146,9 +113,6 @@ export default function MedicinesList() {
                           <Link to={`/inventory/medicines/edit/${med.medicine_id}`} className="icon-btn edit" title="Edit">
                             <Edit size={18} />
                           </Link>
-                          <button className="icon-btn delete" title="Delete" onClick={() => openConfirmModal('delete', med)}>
-                            <Trash2 size={18} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -187,12 +151,6 @@ export default function MedicinesList() {
           )}
         </div>
       </div>
-
-      <ConfirmModal 
-        isOpen={modalOpen} 
-        onCancel={() => setModalOpen(false)}
-        {...modalConfig}
-      />
     </div>
   );
 }

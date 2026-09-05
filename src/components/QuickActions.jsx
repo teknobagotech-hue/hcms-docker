@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, CalendarPlus, ShoppingBag } from 'lucide-react';
+import { UserPlus, CalendarPlus, ShoppingBag, BarChart3 } from 'lucide-react';
 
 export default function QuickActions() {
   const navigate = useNavigate();
@@ -25,11 +25,18 @@ export default function QuickActions() {
           <span className="action-label">New Appt</span>
         </button>
         
-        <button className="action-btn action-btn-full" onClick={() => navigate('/pharmacy/sales/add')}>
+        <button className="action-btn" onClick={() => navigate('/pharmacy/sales/add')}>
           <div className="icon-blue" style={{ background: 'transparent', padding: '0', color: '#0d9488' }}>
             <ShoppingBag />
           </div>
-          <span className="action-label">New Pharmacy Sale</span>
+          <span className="action-label">Pharmacy Sale</span>
+        </button>
+
+        <button className="action-btn" onClick={() => navigate('/reports')}>
+          <div className="icon-primary" style={{ background: '#E0F7F6', color: '#0EBAB1' }}>
+            <BarChart3 />
+          </div>
+          <span className="action-label">Reports & Audit</span>
         </button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Edit, Trash2, Archive, MapPin, Calendar, Activity } from 'lucide-react';
+import { ArrowLeft, Edit, Archive, MapPin, Calendar, Activity } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import '../index.css';
 
@@ -51,21 +51,6 @@ export default function DepartmentView() {
     setModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    const { error } = await supabase
-      .from('departments')
-      .delete()
-      .eq('department_id', id);
-
-    if (error) {
-      toast.error('Failed to delete department. It may be in use.');
-    } else {
-      toast.success('Department deleted successfully');
-      navigate('/departments');
-    }
-    setModalOpen(false);
-  };
-
   const openConfirmModal = (action) => {
     if (action === 'archive') {
       setModalConfig({
@@ -74,14 +59,6 @@ export default function DepartmentView() {
         confirmText: 'Archive',
         confirmType: 'warning',
         onConfirm: handleArchive
-      });
-    } else if (action === 'delete') {
-      setModalConfig({
-        title: 'Delete Department',
-        message: `Are you sure you want to permanently delete "${department.department_name}"? This action cannot be undone.`,
-        confirmText: 'Delete',
-        confirmType: 'danger',
-        onConfirm: handleDelete
       });
     }
     setModalOpen(true);
@@ -115,9 +92,6 @@ export default function DepartmentView() {
                 <Archive size={16} /> Archive
               </button>
             )}
-            <button className="btn btn-danger" onClick={() => openConfirmModal('delete')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Trash2 size={16} /> Delete
-            </button>
           </div>
         </div>
 

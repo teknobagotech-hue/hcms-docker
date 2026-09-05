@@ -15,10 +15,12 @@ export default function UserForm() {
     full_name: '',
     role: 'staff',
     email: '',
-    password: ''
+    password: '',
+    status: 'active'
   });
   
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [hasServiceKey, setHasServiceKey] = useState(!!supabaseAdmin);
 
   useEffect(() => {
@@ -28,7 +30,8 @@ export default function UserForm() {
   }, [id]);
 
   const fetchUser = async () => {
-    const { data, error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from('user_profiles')
       .select('*')
       .eq('id', id)
@@ -41,7 +44,8 @@ export default function UserForm() {
       setFormData(prev => ({
         ...prev,
         full_name: data.full_name || '',
-        role: data.role || 'staff'
+        role: data.role || 'staff',
+        status: data.status || 'active'
       }));
     }
   };
@@ -57,11 +61,13 @@ export default function UserForm() {
 
     if (isEditing) {
       // Editing just updates the profile
-      const { error } = await supabase
+      const client = supabaseAdmin || supabase;
+      const { error } = await client
         .from('user_profiles')
         .update({
           full_name: formData.full_name,
-          role: formData.role
+          role: formData.role,
+          status: formData.status || 'active'
         })
         .eq('id', id);
 
@@ -84,7 +90,11 @@ export default function UserForm() {
         email: formData.email,
         password: formData.password,
         email_confirm: true,
-        user_metadata: { full_name: formData.full_name }
+        user_metadata: { 
+          full_name: formData.full_name,
+          role: formData.role,
+          status: 'active'
+        }
       });
 
       if (error) {
@@ -93,25 +103,26 @@ export default function UserForm() {
         return;
       }
 
-      // The trigger in Supabase should create the user_profiles row automatically,
-      // but we can update the role directly.
+      // Upsert directly into user_profiles with status 'active'
       const userId = data.user.id;
       const { error: profileError } = await supabaseAdmin
         .from('user_profiles')
-        .update({
+        .upsert({
+          id: userId,
           full_name: formData.full_name,
-          role: formData.role
-        })
-        .eq('id', userId);
+          role: formData.role,
+          status: 'active'
+        });
       
       setLoading(false);
 
       if (profileError) {
-        toast.error('User created, but failed to assign role.');
+        console.error('Failed to save user profile:', profileError);
+        toast.error('User auth account created, but failed to save profile: ' + profileError.message);
       } else {
-        toast.success('User created successfully');
+        toast.success('User created successfully and marked active');
+        navigate('/users');
       }
-      navigate('/users');
     }
   };
 
@@ -161,6 +172,23 @@ export default function UserForm() {
               />
             </div>
 
+            {isEditing && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Account Status *</label>
+                <select
+                  name="status"
+                  className="form-input"
+                  style={{ paddingLeft: '1rem' }}
+                  value={formData.status || 'active'}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            )}
+
             {!isEditing && (
               <>
                 <div className="divider" style={{ margin: '1rem 0' }}></div>
@@ -173,7 +201,37 @@ export default function UserForm() {
 
                 <div className="form-group" style={{ margin: 0 }}>
                   <label className="form-label">Temporary Password *</label>
-                  <input type="password" name="password" className="form-input" style={{ paddingLeft: '1rem' }} value={formData.password} onChange={handleChange} required minLength={6} />
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      name="password" 
+                      className="form-input" 
+                      style={{ paddingLeft: '1rem', paddingRight: '2.5rem' }} 
+                      value={formData.password} 
+                      onChange={handleChange} 
+                      required 
+                      minLength={6} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-gray)',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
